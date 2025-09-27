@@ -1,0 +1,248 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+enum EventType {
+  USER_LOGIN
+  USER_LOGOUT
+  USER_CREATED
+  USER_UPDATED
+  USER_DEACTIVATED
+  PATIENT_CREATED
+  PATIENT_UPDATED
+  PATIENT_ACCESSED
+  EHR_CREATED
+  EHR_UPDATED
+  EHR_ACCESSED
+  DOCUMENT_UPLOADED
+  DOCUMENT_ACCESSED
+  APPOINTMENT_CREATED
+  APPOINTMENT_UPDATED
+  APPOINTMENT_CANCELLED
+  PRESCRIPTION_CREATED
+  PRESCRIPTION_UPDATED
+  ORDER_PLACED
+  WORKFLOW_STEP_COMPLETED
+  INVENTORY_UPDATED
+  INVOICE_CREATED
+  BACKUP_CREATED
+  BACKUP_RESTORED
+  POLICY_UPDATED
+  MAINTENANCE_SCHEDULED
+  SYSTEM_ERROR
+  SECURITY_VIOLATION
+}
+
+enum UserRole {
+  ADMIN
+  DOCTOR
+  NURSE
+  PATIENT
+  SYSTEM
+}
+
+enum SeverityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ActionType {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+}
+
+enum ResourceType {
+  PATIENT_RECORD
+  APPOINTMENT
+  PRESCRIPTION
+  BILLING_INFO
+  USER_ACCOUNT
+  SYSTEM_CONFIG
+}
+
+enum PolicyCategory {
+  SECURITY
+  RETENTION
+  BACKUP
+  SESSION
+}
+
+enum BackupType {
+  FULL
+  INCREMENTAL
+  DIFFERENTIAL
+}
+
+enum OperationStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+  SCHEDULED
+}
+
+enum DataType {
+  AUDIT_LOGS
+  PATIENT_DATA
+  SYSTEM_LOGS
+  BACKUPS
+}
+
+enum AlertType {
+  SECURITY
+  PERFORMANCE
+  MAINTENANCE
+  ERROR
+}
+
+model AuditLog {
+  id           String        @id @default(uuid())
+  eventType    EventType
+  userId       String?
+  userRole     UserRole?
+  targetUserId String?
+  patientId    String?
+  resourceType ResourceType?
+  resourceId   String?
+  action       ActionType
+  description  String?
+  ipAddress    String?
+  userAgent    String?
+  sessionId    String?
+  riskLevel    SeverityLevel @default(LOW)
+  metadata     Json?
+  success      Boolean       @default(true)
+  errorMessage String?
+  createdAt    DateTime      @default(now())
+
+  @@index([eventType])
+  @@index([userId])
+  @@index([patientId])
+  @@index([createdAt])
+  @@index([riskLevel])
+  @@map("audit_logs")
+}
+
+model SystemPolicy {
+  id          String         @id @default(uuid())
+  name        String         @unique
+  category    PolicyCategory
+  description String?
+  value       Json
+  isActive    Boolean        @default(true)
+  createdBy   String
+  updatedBy   String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+  @@map("system_policies")
+}
+
+model BackupOperation {
+  id           String          @id @default(uuid())
+  type         BackupType
+  status       OperationStatus
+  filePath     String?
+  fileSize     BigInt?
+  checksum     String?
+  startedAt    DateTime        @default(now())
+  completedAt  DateTime?
+  errorMessage String?
+  createdBy    String
+  metadata     Json?
+
+  @@index([status])
+  @@index([startedAt])
+  @@index([type])
+  @@map("backup_operations")
+}
+
+model MaintenanceWindow {
+  id               String          @id @default(uuid())
+  title            String
+  description      String?
+  startTime        DateTime
+  endTime          DateTime
+  status           OperationStatus
+  affectedServices String   // JSON string for SQLite compatibility
+  createdBy        String
+  notificationSent Boolean         @default(false)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([status])
+  @@index([startTime])
+  @@map("maintenance_windows")
+}
+
+model UserSession {
+  id           String   @id @default(uuid())
+  userId       String
+  userRole     String
+  sessionToken String   @unique
+  ipAddress    String?
+  userAgent    String?
+  isActive     Boolean  @default(true)
+  lastActivity DateTime @default(now())
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([sessionToken])
+  @@index([isActive])
+  @@index([expiresAt])
+  @@map("user_sessions")
+}
+
+model DataRetention {
+  id             String    @id @default(uuid())
+  dataType       DataType
+  retentionDays  Int
+  lastCleanup    DateTime?
+  recordsDeleted Int?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([dataType])
+  @@index([isActive])
+  @@map("data_retention")
+}
+
+model SystemAlert {
+  id         String        @id @default(uuid())
+  type       AlertType
+  severity   SeverityLevel
+  title      String
+  message    String
+  source     String
+  isResolved Boolean       @default(false)
+  resolvedBy String?
+  resolvedAt DateTime?
+  metadata   Json?
+  createdAt  DateTime      @default(now())
+
+  @@index([type])
+  @@index([severity])
+  @@index([isResolved])
+  @@index([createdAt])
+  @@map("system_alerts")
+}
