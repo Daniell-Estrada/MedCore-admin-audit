@@ -53,6 +53,16 @@ export const AUDIT_CONSTANTS = {
     PATIENT: "PATIENT",
     SYSTEM: "SYSTEM",
   },
+
+  ActionTypes: {
+    CREATE: "CREATE",
+    READ: "READ",
+    UPDATE: "UPDATE",
+    DELETE: "DELETE",
+    LOGIN: "LOGIN",
+    LOGOUT: "LOGOUT",
+    ACCESS: "ACCESS",
+  }
 };
 
 export const API_CONSTANTS = {

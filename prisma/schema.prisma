@@ -9,8 +9,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum EventType {
@@ -60,10 +60,13 @@ enum SeverityLevel {
 }
 
 enum ActionType {
-  CREATE
-  READ
+  CREATE 
+  READ 
   UPDATE
   DELETE
+  LOGIN
+  LOGOUT
+  ACCESS
 }
 
 enum ResourceType {
@@ -182,7 +185,7 @@ model MaintenanceWindow {
   startTime        DateTime
   endTime          DateTime
   status           OperationStatus
-  affectedServices String   // JSON string for SQLite compatibility
+  affectedServices String[]
   createdBy        String
   notificationSent Boolean         @default(false)
   createdAt        DateTime        @default(now())
