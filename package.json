@@ -33,6 +33,7 @@
   "dependencies": {
     "@prisma/client": "^6.16.2",
     "dotenv": "^17.2.2",
+    "events": "^3.3.0",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
     "uuid": "^13.0.0",
