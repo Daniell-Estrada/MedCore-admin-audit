@@ -63,6 +63,7 @@ export const AUDIT_CONSTANTS = {
     LOGIN: "LOGIN",
     LOGOUT: "LOGOUT",
     ACCESS: "ACCESS",
+    ERROR: "ERROR",
   },
 
   RESOURCE_TYPES: {

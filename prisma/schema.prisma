@@ -68,6 +68,7 @@ enum ActionType {
   LOGIN
   LOGOUT
   ACCESS
+  ERROR
 }
 
 enum ResourceType {

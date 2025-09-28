@@ -7,6 +7,8 @@ import helmet from "helmet";
 import { PrismaClient } from "@prisma/client";
 import { logger } from "@/utils/logger";
 import routes from "@/router/routes";
+import { errorHandler } from "@/middleware/errorHandler";
+import { requestLogger } from "@/middleware/requestLogger";
 
 // Load environment variables
 dotenv.config();
@@ -56,8 +58,8 @@ app.use(compression());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// app.use(requestLogger);
-// app.use(errorHandler);
+app.use(requestLogger);
+app.use(errorHandler);
 
 // Logging middleware
 app.use(
