@@ -22,7 +22,6 @@ and medical analytics.
 - [![winston-logo]][winston-url]- Winston, a logging library for Node.js.
 - [![zod-logo]][zod-url]- Zod, a schema validation library for TypeScript.
 
-
 [prima/client-logo]: https://img.shields.io/badge/Prisma-000000?style=for-the-badge&logo=prisma
 [prima/client-url]: https://www.prisma.io/
 [dotenv-logo]: https://img.shields.io/badge/Dotenv-000000?style=for-the-badge&logo=dotenv
