@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AUDIT_CONSTANTS } from "../config/constants";
+import { AUDIT_CONSTANTS } from "@/config/constants";
 
 /**
  * Zod schema for validating audit log entries
@@ -19,14 +19,14 @@ export const AuditLogSchema = z.object({
   resourceType: z.string().max(100).optional(),
   resourceId: z.string().max(100).optional(),
   action: z.enum(
-    Object.values(AUDIT_CONSTANTS.ActionTypes) as [string, ...string[]],
+    Object.values(AUDIT_CONSTANTS.ACTION_TYPES) as [string, ...string[]],
   ),
   description: z.string().max(1000).optional(),
   ipAddress: z.ipv4().or(z.ipv6()).optional(),
   userAgent: z.string().max(500).optional(),
   sessionId: z.uuid().optional(),
-  riskLevel: z
-    .enum(Object.values(AUDIT_CONSTANTS.RISK_LEVELS) as [string, ...string[]])
+  severityLevel: z
+    .enum(Object.values(AUDIT_CONSTANTS.SEVERITY_LEVELS) as [string, ...string[]])
     .default("LOW"),
   metadata: z.record(z.any(), z.json()).optional(),
   success: z.boolean().default(true),
@@ -34,6 +34,10 @@ export const AuditLogSchema = z.object({
 });
 
 export type AuditLogInput = z.infer<typeof AuditLogSchema>;
+export type AuditEventType =
+  (typeof AUDIT_CONSTANTS.EVENT_TYPES)[keyof typeof AUDIT_CONSTANTS.EVENT_TYPES];
+export type AuditSeverity =
+  (typeof AUDIT_CONSTANTS.SEVERITY_LEVELS)[keyof typeof AUDIT_CONSTANTS.SEVERITY_LEVELS];
 
 export interface AuditLogEntity extends AuditLogInput {
   id: string;
@@ -61,7 +65,7 @@ export class AuditLog {
     public readonly ipAddress?: string,
     public readonly userAgent?: string,
     public readonly sessionId?: string,
-    public readonly riskLevel: string = "LOW",
+    public readonly severityLevel: string = "LOW",
     public readonly metadata?: Record<string, any>,
     public readonly success: boolean = true,
     public readonly errorMessage?: string,
@@ -105,7 +109,7 @@ export class AuditLog {
    */
   public requiresImmediateAttention(): boolean {
     return (
-      this.riskLevel === AUDIT_CONSTANTS.RISK_LEVELS.CRITICAL ||
+      this.severityLevel === AUDIT_CONSTANTS.SEVERITY_LEVELS.CRITICAL ||
       this.eventType === AUDIT_CONSTANTS.EVENT_TYPES.SECURITY_VIOLATION ||
       (!this.success && this.isHIPAASensitive())
     );
@@ -130,7 +134,7 @@ export class AuditLog {
       ipAddress: this.ipAddress,
       userAgent: this.userAgent,
       sessionId: this.sessionId,
-      riskLevel: this.riskLevel,
+      severityLevel: this.severityLevel,
       metadata: this.metadata,
       success: this.success,
       errorMessage: this.errorMessage,

@@ -53,6 +53,7 @@ enum UserRole {
 }
 
 enum SeverityLevel {
+  INFO
   LOW
   MEDIUM
   HIGH
@@ -115,30 +116,30 @@ enum AlertType {
 }
 
 model AuditLog {
-  id           String        @id @default(uuid())
-  eventType    EventType
-  userId       String?
-  userRole     UserRole?
-  targetUserId String?
-  patientId    String?
-  resourceType ResourceType?
-  resourceId   String?
-  action       ActionType
-  description  String?
-  ipAddress    String?
-  userAgent    String?
-  sessionId    String?
-  riskLevel    SeverityLevel @default(LOW)
-  metadata     Json?
-  success      Boolean       @default(true)
-  errorMessage String?
-  createdAt    DateTime      @default(now())
+  id            String        @id @default(uuid())
+  eventType     EventType
+  userId        String?
+  userRole      UserRole?
+  targetUserId  String?
+  patientId     String?
+  resourceType  ResourceType?
+  resourceId    String?
+  action        ActionType
+  description   String?
+  ipAddress     String?
+  userAgent     String?
+  sessionId     String?
+  severityLevel SeverityLevel @default(LOW)
+  metadata      Json?
+  success       Boolean       @default(true)
+  errorMessage  String?
+  createdAt     DateTime      @default(now())
 
   @@index([eventType])
   @@index([userId])
   @@index([patientId])
   @@index([createdAt])
-  @@index([riskLevel])
+  @@index([severityLevel])
   @@map("audit_logs")
 }
 

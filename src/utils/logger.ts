@@ -19,9 +19,9 @@ const hipaaFormat = winston.format.combine(
         level: level.toUpperCase(),
         service: service || "ms-admin-audit",
         message,
-        ...(userId && { userId }),
-        ...(sessionId && { sessionId }),
-        ...meta,
+        ...(userId ? { userId } : {}),
+        ...(sessionId ? { sessionId } : {}),
+        ...(meta || {}),
       };
 
       return JSON.stringify(logEntry);

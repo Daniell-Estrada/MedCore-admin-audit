@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "nodemon --exec ts-node src/index.ts",
+    "dev": "nodemon --exec 'tsc --noEmit && ts-node -r tsconfig-paths/register' src/index.ts",
     "build": "tsc",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -32,20 +32,27 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^6.16.2",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "events": "^3.3.0",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
+    "morgan": "^1.10.1",
     "uuid": "^13.0.0",
     "winston": "^3.17.0",
     "zod": "^4.1.11"
   },
   "devDependencies": {
+    "@types/compression": "^1.8.1",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@types/morgan": "^1.9.10",
     "@types/node": "^24.5.2",
     "nodemon": "^3.1.10",
     "prisma": "^6.16.2",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.2"
   }
 }

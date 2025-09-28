@@ -2,6 +2,9 @@ node_modules
 # Keep environment variables out of version control
 .env
 
+/documents
+/prisma/migrations
+
 /generated/prisma
 
 # Created by https://www.toptal.com/developers/gitignore/api/node,dotenv,venv,visualstudiocode,macos,linux,windows

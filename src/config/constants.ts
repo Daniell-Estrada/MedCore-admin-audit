@@ -39,7 +39,8 @@ export const AUDIT_CONSTANTS = {
     SECURITY_VIOLATION: "SECURITY_VIOLATION",
   },
 
-  RISK_LEVELS: {
+  SEVERITY_LEVELS: {
+    INFO: "INFO",
     LOW: "LOW",
     MEDIUM: "MEDIUM",
     HIGH: "HIGH",
@@ -54,7 +55,7 @@ export const AUDIT_CONSTANTS = {
     SYSTEM: "SYSTEM",
   },
 
-  ActionTypes: {
+  ACTION_TYPES: {
     CREATE: "CREATE",
     READ: "READ",
     UPDATE: "UPDATE",
@@ -62,7 +63,16 @@ export const AUDIT_CONSTANTS = {
     LOGIN: "LOGIN",
     LOGOUT: "LOGOUT",
     ACCESS: "ACCESS",
-  }
+  },
+
+  RESOURCE_TYPES: {
+    PATIENT_RECORD: "PATIENT_RECORD",
+    APPOINTMENT: "APPOINTMENT",
+    PRESCRIPTION: "PRESCRIPTION",
+    BILLING_INFO: "BILLING_INFO",
+    USER_ACCOUNT: "USER_ACCOUNT",
+    SYSTEM_CONFIG: "SYSTEM_CONFIG",
+  },
 };
 
 export const API_CONSTANTS = {

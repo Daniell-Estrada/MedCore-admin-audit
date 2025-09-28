@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import { logger } from "@/utils/logger";
-import { AuditService } from "./AuditService";
+import { AuditService } from "@/services/AuditService";
 import { AUDIT_CONSTANTS } from "@/config/constants";
 
 export interface MedCoreEvent {
@@ -31,64 +31,37 @@ export class EventBus extends EventEmitter {
    */
   private setupEventHandlers(): void {
     // User Management Events (from ms-security)
-    this.on("UserCreated", this.handleUserEvent.bind(this));
-    this.on("UserUpdated", this.handleUserEvent.bind(this));
-    this.on("UserDeactivated", this.handleUserEvent.bind(this));
-    this.on("UserDeleted", this.handleUserEvent.bind(this));
-    this.on("UserLogin", this.handleUserEvent.bind(this));
-    this.on("UserLogout", this.handleUserEvent.bind(this));
+    this.on("user.login", this.handleUserLogin.bind(this));
+    // this.on("user.logout", this.handleUserLogout.bind(this))
+    // this.on("user.login_failed", this.handleLoginFailed.bind(this))
+    // this.on("user.password_changed", this.handlePasswordChanged.bind(this))
+    // this.on("user.role_changed", this.handleRoleChanged.bind(this))
   }
 
-  /**
-   * Handles user-related events and creates corresponding audit logs
-   */
-  private async handleUserEvent(event: MedCoreEvent): Promise<void> {
+  private async handleUserLogin(eventData: any): Promise<void> {
     try {
-      const riskLevel =
-        event.type === "UserDeactivated"
-          ? AUDIT_CONSTANTS.RISK_LEVELS.HIGH
-          : AUDIT_CONSTANTS.RISK_LEVELS.MEDIUM;
+      const metadata: Record<string, any> = {};
+      if (eventData.department) metadata.department = eventData.department;
+      if (eventData.loginMethod) metadata.loginMethod = eventData.loginMethod;
 
       await this.auditService.createAuditLog({
-        eventType: event.type.toUpperCase(),
-        userId: event.userId,
-        userRole: event.data.userRole || AUDIT_CONSTANTS.USER_ROLES.SYSTEM,
-        targetUserId: event.data.targetUserId || event.data.userId,
-        action: this.getActionFromEventType(event.type),
-        description: `Event event: ${event.type}`,
-        resourceType: "USER",
-        resourceId: event.data.targetUserId || event.data.userId,
-        riskLevel,
-        metadata: {
-          source: event.source,
-          eventId: event.id,
-          ...event.data,
-        },
+        eventType: AUDIT_CONSTANTS.EVENT_TYPES.USER_LOGIN,
+        severityLevel: AUDIT_CONSTANTS.SEVERITY_LEVELS.INFO,
+        action: AUDIT_CONSTANTS.ACTION_TYPES.LOGIN,
+        userId: eventData.userId,
+        userRole: eventData.role,
+        resourceType: AUDIT_CONSTANTS.RESOURCE_TYPES.USER_ACCOUNT,
+        resourceId: eventData.userId,
+        description: "User logged in",
+        sessionId: eventData.sessionId,
+        ipAddress: eventData.ipAddress,
+        userAgent: eventData.userAgent,
+        metadata,
         success: true,
       });
+      logger.info("User login event logged", { eventData });
     } catch (error) {
-      logger.error("Failed to handle user event", {
-        error: error instanceof Error ? error.message : "Unknown error",
-        event,
-      });
+      logger.error("Failed to log user login event", { error, eventData });
     }
-  }
-
-  /**
-   * Maps event types to action types for audit logging
-   */
-  private getActionFromEventType(eventType: string): string {
-    if (eventType.includes("Created"))
-      return AUDIT_CONSTANTS.ActionTypes.CREATE;
-    if (eventType.includes("Updated"))
-      return AUDIT_CONSTANTS.ActionTypes.UPDATE;
-    if (eventType.includes("Cancelled"))
-      return AUDIT_CONSTANTS.ActionTypes.DELETE;
-    if (eventType.includes("Deleted"))
-      return AUDIT_CONSTANTS.ActionTypes.DELETE;
-    if (eventType.includes("Accessed")) return AUDIT_CONSTANTS.ActionTypes.READ;
-    if (eventType.includes("Login")) return AUDIT_CONSTANTS.ActionTypes.READ;
-    if (eventType.includes("Logout")) return AUDIT_CONSTANTS.ActionTypes.LOGOUT;
-    return AUDIT_CONSTANTS.ActionTypes.ACCESS;
   }
 }

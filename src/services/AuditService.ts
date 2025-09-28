@@ -8,18 +8,20 @@ import {
 import { logger, auditLogger, securityLogger } from "@/utils/logger";
 import { DatabaseConfig } from "@/config/database";
 import { Record } from "@prisma/client/runtime/library";
+import { API_CONSTANTS } from "@/config/constants";
+import type { AuditEventType, AuditSeverity } from "@/models/AuditLog";
 
 /**
  * Filters for querying audit logs.
  */
 export interface AuditQueryFilters {
-  evetType?: string;
+  eventType?: string;
   userId?: string;
   patientId?: string;
-  resourceId?: string;
-  riskLevel?: string;
-  startDate?: Date;
-  endDate?: Date;
+  resourceType?: string;
+  severityLevel?: string;
+  startDate?: Date | undefined;
+  endDate?: Date | undefined;
   success?: boolean;
   page?: number;
   limit?: number;
@@ -81,7 +83,7 @@ export class AuditService {
         savedLog.ipAddress || undefined,
         savedLog.userAgent || undefined,
         savedLog.sessionId || undefined,
-        savedLog.riskLevel,
+        savedLog.severityLevel,
         (savedLog.metadata as Record<string, any>) || undefined,
         savedLog.success,
         savedLog.errorMessage || undefined,
@@ -92,7 +94,7 @@ export class AuditService {
         eventType: auditLog.eventType,
         userId: auditLog.userId,
         patientId: auditLog.patientId,
-        riskLevel: auditLog.riskLevel,
+        severityLevel: auditLog.severityLevel,
         success: auditLog.success,
       });
 
@@ -113,11 +115,119 @@ export class AuditService {
       return auditLog;
     } catch (error) {
       logger.error("Failed to create audit log", {
-        error: error instanceof Error ? error.message : "Unknown error",
-        input,
+        error: error instanceof Error ? error.message : "Unknown error"
       });
       throw new Error("Failed to create audit log");
     }
+  }
+
+  /**
+   * Query audit logs with filtering and pagination.
+   */
+  async queryAuditLogs(filters: AuditQueryFilters): Promise<AuditQueryResult> {
+    try {
+      const page = Math.max(1, filters.page || 1);
+      const limit = Math.min(
+        API_CONSTANTS.MAX_PAGE_SIZE,
+        filters.limit || API_CONSTANTS.DEFAULT_PAGE_SIZE,
+      );
+      const skip = (page - 1) * limit;
+      const where: any = {};
+
+      if (filters.eventType) where.eventType = filters.eventType;
+      if (filters.userId) where.userId = filters.userId;
+      if (filters.patientId) where.patientId = filters.patientId;
+      if (filters.resourceType) where.resourceType = filters.resourceType;
+      if (filters.severityLevel) where.severityLevel = filters.severityLevel;
+      if (filters.success !== undefined) where.success = filters.success;
+
+      if (filters.startDate || filters.endDate) {
+        where.createdAt = {};
+        if (filters.startDate) where.createdAt.gte = filters.startDate;
+        if (filters.endDate) where.createdAt.lte = filters.endDate;
+      }
+
+      const [logs, total] = await Promise.all([
+        this.prisma.auditLog.findMany({
+          where,
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: limit,
+        }),
+        this.prisma.auditLog.count({ where }),
+      ]);
+
+      const auditLogs = logs.map(
+        (log) =>
+          new AuditLog(
+            log.id,
+            log.eventType,
+            log.action,
+            log.createdAt,
+            log.userId || undefined,
+            log.userRole || undefined,
+            log.targetUserId || undefined,
+            log.patientId || undefined,
+            log.resourceType || undefined,
+            log.resourceId || undefined,
+            log.description || undefined,
+            log.ipAddress || undefined,
+            log.userAgent || undefined,
+            log.sessionId || undefined,
+            log.severityLevel,
+            (log.metadata as Record<string, any>) || undefined,
+            log.success,
+            log.errorMessage || undefined,
+          ),
+      );
+
+      const totalPages = Math.ceil(total / limit);
+
+      logger.info("Audit logs queried successfully", {
+        total,
+        page,
+        limit,
+        filters,
+      });
+
+      return {
+        logs: auditLogs,
+        total,
+        page,
+        limit,
+        totalPages,
+      };
+    } catch (error) {
+      logger.error("Failed to query audit logs", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        filters,
+      });
+      throw new Error("Failed to query audit logs");
+    }
+  }
+
+  /**
+   * Public method to get audit logs with pagination and filtering.
+   */
+  async getAuditLogs(
+    page = 1,
+    limit = 20,
+    filters: {
+      startDate?: Date | undefined;
+      endDate?: Date | undefined;
+      eventType?: AuditEventType;
+      severity?: AuditSeverity;
+      userId?: string;
+      resourceType?: string;
+      patientId?: string;
+      success?: boolean;
+    } = {},
+  ): Promise<AuditQueryResult> {
+    return this.queryAuditLogs({
+      page,
+      limit,
+      ...filters,
+    });
   }
 
   /**
@@ -129,7 +239,7 @@ export class AuditService {
         auditLogId: auditLog.id,
         eventType: auditLog.eventType,
         userId: auditLog.userId,
-        riskLevel: auditLog.riskLevel,
+        severityLevel: auditLog.severityLevel,
         success: auditLog.success,
       });
 
@@ -147,7 +257,7 @@ export class AuditService {
             auditLogId: auditLog.id,
             eventType: auditLog.eventType,
             userId: auditLog.userId,
-            riskLevel: auditLog.riskLevel,
+            severityLevel: auditLog.severityLevel,
           },
         },
       });

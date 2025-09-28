@@ -7,18 +7,24 @@ export class DatabaseConfig {
   public static getInstance(): PrismaClient {
     if (!DatabaseConfig.instance) {
       DatabaseConfig.instance = new PrismaClient({
+        log: [
+          { level: "query", emit: "event" },
+          { level: "error", emit: "event" },
+          { level: "info", emit: "event" },
+          { level: "warn", emit: "event" },
+        ],
         errorFormat: "pretty",
       });
 
       if (process.env.NODE_ENV === "development") {
-        DatabaseConfig.instance.$on("query", (e: any) => {
+        DatabaseConfig.instance.$on("query" as never, (e: any) => {
           console.log("Query: " + e.query);
           console.log("Params: " + e.params);
           console.log("Duration: " + e.duration + "ms");
         });
       }
 
-      DatabaseConfig.instance.$on("error", (e) => {
+      DatabaseConfig.instance.$on("error" as never, (e) => {
         logger.error("Database error: ", e);
       });
     }

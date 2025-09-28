@@ -57,7 +57,7 @@ export const validateEventPayload = (
       delete eventData.password;
       delete eventData.token;
     }
-
+    req.body = { eventType, eventData };
     next();
   } catch (error) {
     logger.error("Event validation failed", { error, body: req.body });
