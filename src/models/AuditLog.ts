@@ -33,9 +33,9 @@ export const AuditLogSchema = z.object({
   errorMessage: z.string().max(1000).optional(),
 });
 
-export type AuditLogType = z.infer<typeof AuditLogSchema>;
+export type AuditLogInput = z.infer<typeof AuditLogSchema>;
 
-export interface AuditLogEntity extends AuditLogType {
+export interface AuditLogEntity extends AuditLogInput {
   id: string;
   createdAt: Date;
 }
