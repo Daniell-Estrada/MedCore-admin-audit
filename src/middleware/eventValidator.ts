@@ -1,6 +1,9 @@
 import type { Request, Response, NextFunction } from "express";
 import { logger } from "@/utils/logger";
 
+/**
+ * Interface representing the expected structure of the event payload
+ */
 interface EventPayload {
   eventType: string;
   eventData: {
@@ -11,7 +14,12 @@ interface EventPayload {
     [key: string]: any;
   };
 }
-
+/**
+ * Middleware to validate the event payload
+ * Ensures required fields are present and correctly formatted
+ * Adds missing fields like timestamp, ipAddress, and userAgent if not provided
+ * Removes sensitive information from eventData
+ */
 export const validateEventPayload = (
   req: Request,
   res: Response,
@@ -57,6 +65,10 @@ export const validateEventPayload = (
   }
 };
 
+/**
+ * Middleware to validate the X-Event-Source header
+ * Ensures the event source is one of the allowed values
+ */
 export const validateEventSource = (
   req: Request,
   res: Response,
