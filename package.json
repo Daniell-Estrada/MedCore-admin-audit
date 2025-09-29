@@ -31,7 +31,10 @@
   "homepage": "https://github.com/Daniell-Estrada/MedCore-admin-audit#readme",
   "description": "",
   "dependencies": {
+    "@azure/event-hubs": "^6.0.0",
+    "@azure/identity": "^4.12.0",
     "@prisma/client": "^6.16.2",
+    "@types/uuid": "^10.0.0",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
@@ -39,6 +42,7 @@
     "express": "^5.1.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
+    "kafkajs": "^2.2.4",
     "morgan": "^1.10.1",
     "uuid": "^13.0.0",
     "winston": "^3.17.0",

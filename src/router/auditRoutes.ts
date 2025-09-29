@@ -6,7 +6,6 @@ import {
 } from "@/middleware/eventValidator";
 
 export function auditRoutes(auditController: AuditController): Router {
-  console.log("Setting up audit routes");
   const router = Router();
 
   router.post(
