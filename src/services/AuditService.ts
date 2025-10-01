@@ -8,7 +8,7 @@ import {
 import { logger, auditLogger, securityLogger } from "@/utils/logger";
 import { DatabaseConfig } from "@/config/database";
 import { Record } from "@prisma/client/runtime/library";
-import { API_CONSTANTS } from "@/config/constants";
+import { API_CONSTANTS } from "@/constants/constants";
 import type { AuditEventType, AuditSeverity } from "@/models/AuditLog";
 
 /**
@@ -106,7 +106,7 @@ export class AuditService {
         await this.handleHIPAAEvent(auditLog);
       }
 
-      logger.info("Audit log crated successfully", {
+      logger.info("Audit log created successfully", {
         auditLogId: auditLog.id,
         eventType: auditLog.eventType,
         userId: auditLog.userId,
@@ -115,7 +115,7 @@ export class AuditService {
       return auditLog;
     } catch (error) {
       logger.error("Failed to create audit log", {
-        error: error instanceof Error ? error.message : "Unknown error"
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       throw new Error("Failed to create audit log");
     }

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AUDIT_CONSTANTS } from "@/config/constants";
+import { AUDIT_CONSTANTS } from "@/constants/auditConstants";
 
 /**
  * Zod schema for validating audit log entries
@@ -26,7 +26,9 @@ export const AuditLogSchema = z.object({
   userAgent: z.string().max(500).optional(),
   sessionId: z.uuid().optional(),
   severityLevel: z
-    .enum(Object.values(AUDIT_CONSTANTS.SEVERITY_LEVELS) as [string, ...string[]])
+    .enum(
+      Object.values(AUDIT_CONSTANTS.SEVERITY_LEVELS) as [string, ...string[]],
+    )
     .default("LOW"),
   metadata: z.record(z.any(), z.json()).optional(),
   success: z.boolean().default(true),
@@ -85,7 +87,7 @@ export class AuditLog {
       AUDIT_CONSTANTS.EVENT_TYPES.EHR_CREATED,
       AUDIT_CONSTANTS.EVENT_TYPES.EHR_UPDATED,
     ];
-    return sensitiveEvents.includes(this.eventType);
+    return sensitiveEvents.includes(this.eventType as any);
   }
 
   /**
@@ -99,7 +101,7 @@ export class AuditLog {
       AUDIT_CONSTANTS.EVENT_TYPES.SECURITY_VIOLATION,
       AUDIT_CONSTANTS.EVENT_TYPES.USER_DEACTIVATED,
     ];
-    return securityEvents.includes(this.eventType);
+    return securityEvents.includes(this.eventType as any);
   }
 
   /**

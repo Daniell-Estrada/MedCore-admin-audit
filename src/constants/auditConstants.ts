@@ -1,3 +1,7 @@
+/**
+ * These constants are used throughout the audit logging system to ensure consistency and maintainability.
+ */
+
 export const AUDIT_CONSTANTS = {
   LOG_RETENTION_YEARS: 7,
   LOG_RETENTION_DAYS: 7 * 365,
@@ -70,6 +74,11 @@ export const AUDIT_CONSTANTS = {
     UNAUTHORIZED_ACCESS_ATTEMPT: "UNAUTHORIZED_ACCESS_ATTEMPT",
     SYSTEM_STARTUP: "SYSTEM_STARTUP",
     SYSTEM_SHUTDOWN: "SYSTEM_SHUTDOWN",
+    HTTP_POST_REQUEST: "HTTP_POST_REQUEST",
+    HTTP_GET_REQUEST: "HTTP_GET_REQUEST",
+    HTTP_PUT_REQUEST: "HTTP_PUT_REQUEST",
+    HTTP_DELETE_REQUEST: "HTTP_DELETE_REQUEST",
+    HTTP_PATCH_REQUEST: "HTTP_PATCH_REQUEST",
   },
 
   SEVERITY_LEVELS: {
@@ -126,40 +135,4 @@ export const AUDIT_CONSTANTS = {
     BACKUP_FILE: "BACKUP_FILE",
     AUDIT_LOG: "AUDIT_LOG",
   },
-};
-
-export const API_CONSTANTS = {
-  MAX_PAGE_SIZE: 100,
-  DEFAULT_PAGE_SIZE: 20,
-  MAX_EXPORT_RECORDS: 10000,
-} as const;
-
-export const VALIDATION_CONSTANTS = {
-  MIN_PASSWORD_LENGTH: 8,
-  MAX_PASSWORD_LENGTH: 128,
-  MAX_DESCRIPTION_LENGTH: 1000,
-  MAX_METADATA_SIZE: 10000,
-} as const;
-
-export const AZURE_EVENT_HUB_CONFIG = {
-  CONNECTION_STRING: process.env.AZURE_EVENTHUB_CONNECTION_STRING || "",
-  NAMESPACE: process.env.AZURE_EVENTHUB_NAMESPACE || "",
-  CLIENT_ID: process.env.AZURE_EVENTHUB_CLIENT_ID || "",
-  CONSUMER_GROUP: process.env.AZURE_EVENTHUB_CONSUMER_GROUP || "$Default",
-  PARTITION_COUNT: parseInt(process.env.AZURE_EVENTHUB_PARTITION_COUNT || "4"),
-  MAX_BATCH_SIZE: parseInt(process.env.AZURE_EVENTHUB_MAX_BATCH_SIZE || "100"),
-  MAX_WAIT_TIME_MS: parseInt(
-    process.env.AZURE_EVENTHUB_MAX_WAIT_TIME_MS || "1000",
-  ),
-} as const;
-
-export const AZURE_EVENT_HUB_CONSTANTS = {
-  AUDIT: "medcore-audit-events",
-  SECURITY: "medcore-security-events",
-  PATIENT: "medcore-patient-events",
-  CLINICAL: "medcore-clinical-events",
-  INVENTORY: "medcore-inventory-events",
-  SYSTEM: "medcore-system-events",
-  COMPLIANCE: "medcore-compliance-events",
-  DLQ: "medcore-dead-letter-queue",
 } as const;

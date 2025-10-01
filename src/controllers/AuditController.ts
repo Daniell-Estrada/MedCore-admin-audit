@@ -1,39 +1,15 @@
 import type { Request, Response } from "express";
 import type { AuditService } from "@/services/AuditService";
-import type { EventBus } from "@/services/EventBus";
 import { logger } from "@/utils/logger";
 import type { AuditEventType, AuditSeverity } from "@/models/AuditLog";
 
+/**
+ * AuditController handles HTTP requests related to audit logs.
+ * It provides an endpoint to retrieve audit logs with filtering and pagination support.
+ */
 export class AuditController {
-  constructor(
-    private auditService: AuditService,
-    private eventBus: EventBus,
-  ) {}
+  constructor(private auditService: AuditService) {}
 
-  /**
-   * Receive an event from an external source.
-   * Validates and queues the event for processing.
-   */
-  async receiveEvent(req: Request, res: Response): Promise<void> {
-    try {
-      const { eventType, eventData } = req.body;
-      const success = this.eventBus.emit(eventType, eventData);
-            logger.info("Event received and queued for processing", { eventType });
-      if (!success) {
-        res.status(400).json({ error: "No handler for event type" });
-        return;
-      }
-
-      res.status(200).json({ message: "Event received successfully" });
-    } catch (error) {
-      logger.error("Failed to receive event", { error, body: req.body });
-      res.status(500).json({ error: "Failed to process event" });
-    }
-  }
-
-  /**
-   * Retrieve audit logs with optional filtering and pagination.
-   */
   async getAuditLogs(req: Request, res: Response): Promise<void> {
     try {
       const {

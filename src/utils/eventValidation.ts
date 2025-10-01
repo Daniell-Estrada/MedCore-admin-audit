@@ -1,24 +1,29 @@
 import { z } from "zod";
-import { AUDIT_CONSTANTS } from "@/config/constants";
+import { AUDIT_CONSTANTS } from "@/constants/auditConstants";
 
+/**
+ * Base schema for MedCore events
+ * This schema defines the common structure for all event types,
+ * ensuring consistency and facilitating validation across different event categories.
+ */
 export const MedCoreEventSchema = z.object({
   eventId: z.uuid(),
   eventType: z.string().min(1),
   source: z.string().min(1),
-  timestamp: z.date(),
-  userId: z.uuid().optional(),
+  timestamp: z.coerce.date(),
+  userId: z.string().optional(),
   sessionId: z.uuid().optional(),
   severityLevel: z.enum(
     Object.values(AUDIT_CONSTANTS.SEVERITY_LEVELS) as [string, ...string[]],
   ),
-  data: z.record(z.any(), z.any()),
+  data: z.record(z.string(), z.unknown()),
   hipaaCompliance: z
     .object({
       patientId: z.uuid().optional(),
       accessReason: z.string().optional(),
     })
     .optional(),
-  metadata: z.record(z.any(), z.json()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const SecurityEventSchema = MedCoreEventSchema.extend({

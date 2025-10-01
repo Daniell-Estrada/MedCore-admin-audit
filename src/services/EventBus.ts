@@ -3,9 +3,17 @@ import { v4 as uuidv4 } from "uuid";
 import type { Producer, Consumer, EachMessagePayload } from "kafkajs";
 import { logger, auditLogger, securityLogger } from "@/utils/logger";
 import { AuditService } from "@/services/AuditService";
-import { AUDIT_CONSTANTS } from "@/config/constants";
+import { AUDIT_CONSTANTS } from "@/constants/auditConstants";
 import { AzureEventHubConfig } from "@/config/AzureEventHubConfig";
 import { DatabaseConfig } from "@/config/database";
+import {
+  getEventValidationErrors,
+  validateEvent,
+} from "@/utils/eventValidation";
+import {
+  mapEventTypeToAction,
+  mapEventTypeToResourceType,
+} from "@/utils/mappings";
 
 export interface MedCoreAuditEvent {
   eventId: string;
@@ -99,30 +107,48 @@ export class EventBus extends EventEmitter {
     const eventHubs = AzureEventHubConfig.getEventHubs();
 
     const subscriptions = [
-      { hub: "SECURITY", handler: this.handleSecurityEvents.bind(this) },
-      { hub: "PATIENT", handler: this.handlePatientEvents.bind(this) },
-      { hub: "CLINICAL", handler: this.handleClinicalEvents.bind(this) },
-      { hub: "INVENTORY", handler: this.handleInventoryEvents.bind(this) },
-      { hub: "SYSTEM", handler: this.handleSystemEvents.bind(this) },
+      {
+        hub: "SECURITY",
+        handler: this.handleSecurityEvents.bind(this),
+        topic: eventHubs.SECURITY,
+      },
+      {
+        hub: "PATIENT",
+        handler: this.handlePatientEvents.bind(this),
+        topic: eventHubs.PATIENT,
+      },
+      {
+        hub: "CLINICAL",
+        handler: this.handleClinicalEvents.bind(this),
+        topic: eventHubs.CLINICAL,
+      },
+      {
+        hub: "INVENTORY",
+        handler: this.handleInventoryEvents.bind(this),
+        topic: eventHubs.INVENTORY,
+      },
+      {
+        hub: "SYSTEM",
+        handler: this.handleSystemEvents.bind(this),
+        topic: eventHubs.SYSTEM,
+      },
     ];
 
-    for (const { hub, handler } of subscriptions) {
+    for (const { hub, handler, topic } of subscriptions) {
       try {
-        const consumer = await AzureEventHubConfig.createConsumer(
-          eventHubs[hub as keyof typeof eventHubs],
-        );
+        const connection = await AzureEventHubConfig.getConnection(topic);
 
-        await consumer.run({
-          eachMessage: async (payload: EachMessagePayload) => {
-            await this.processMessage(payload, handler);
-          },
-        });
+        if (connection.consumer) {
+          await connection.consumer.run({
+            eachMessage: async (payload: EachMessagePayload) => {
+              await this.processMessage(payload, handler);
+            },
+          });
 
-        this.consumers.set(hub, consumer);
-        logger.info("Consumer initialized", { hub });
+          logger.info("Consumer running for hub", { hub, topic });
+        }
       } catch (error) {
         logger.error("Failed to initialize consumer", { hub, error });
-        throw error;
       }
     }
   }
@@ -139,13 +165,24 @@ export class EventBus extends EventEmitter {
 
     try {
       eventData = JSON.parse(message.value?.toString() || "{}");
+      console.log("Received event:", eventData);
 
-      if (!this.isValidEvent(eventData)) {
-        throw new Error("Invalid event structure");
+      if (!validateEvent(eventData, eventData.source)) {
+        const errors = getEventValidationErrors(
+          eventData,
+          (eventData as MedCoreAuditEvent).source || "unknown",
+        );
+        logger.error("Invalid event received", { errors, eventData });
+
+        await this.sendToDeadLetterQueue(
+          eventData,
+          new Error(`Validation errors: ${errors.join(", ")}`),
+          topic,
+        );
+        return;
       }
 
       await this.trackEventProcessing(eventData.eventId, "PROCESSING", topic);
-
       await handler(eventData);
 
       await this.trackEventProcessing(eventData.eventId, "COMPLETED", topic);
@@ -172,21 +209,6 @@ export class EventBus extends EventEmitter {
 
       await this.handleFailedEvent(eventData!, error as Error, topic);
     }
-  }
-
-  /**
-   * Validate event structure
-   */
-  private isValidEvent(event: any): event is MedCoreAuditEvent {
-    return (
-      event &&
-      typeof event.eventId === "string" &&
-      typeof event.eventType === "string" &&
-      typeof event.source === "string" &&
-      event.timestamp &&
-      typeof event.severityLevel === "string" &&
-      event.data
-    );
   }
 
   /**
@@ -332,7 +354,6 @@ export class EventBus extends EventEmitter {
   }
 
   /**
-   * Schedule event retry (simplified implementation)
    */
   private async scheduleRetry(
     event: MedCoreAuditEvent,
@@ -449,14 +470,25 @@ export class EventBus extends EventEmitter {
   /**
    * Handle security events from ms-security
    */
-  private async handleSecurityEvents(event: MedCoreAuditEvent): Promise<void> {
+  private async handleSecurityEvents(event: any): Promise<void> {
     try {
+      console.log("Handling security event:", event);
       const metadata: Record<string, any> = { ...event.data };
+      let mappedEventType = event.eventType;
+
+      if (
+        !Object.values(AUDIT_CONSTANTS.EVENT_TYPES).includes(
+          event.eventType as any,
+        )
+      ) {
+        mappedEventType =
+          event.data.statusCode >= 400 ? "SECURITY_VIOLATION" : "SYSTEM_ERROR";
+      }
 
       await this.auditService.createAuditLog({
-        eventType: event.eventType as any,
+        eventType: mappedEventType as any,
         severityLevel: event.severityLevel as any,
-        action: this.mapEventTypeToAction(event.eventType),
+        action: mapEventTypeToAction(mappedEventType),
         userId: event.userId,
         userRole: event.data.role,
         resourceType: AUDIT_CONSTANTS.RESOURCE_TYPES.USER_ACCOUNT,
@@ -465,7 +497,10 @@ export class EventBus extends EventEmitter {
         sessionId: event.sessionId,
         ipAddress: event.data.ipAddress,
         userAgent: event.data.userAgent,
-        metadata,
+        metadata: {
+          ...metadata,
+          originalEventType: event.eventType,
+        },
         success: event.data.success !== false,
       });
 
@@ -490,7 +525,7 @@ export class EventBus extends EventEmitter {
       await this.auditService.createAuditLog({
         eventType: event.eventType as any,
         severityLevel: event.severityLevel as any,
-        action: this.mapEventTypeToAction(event.eventType),
+        action: mapEventTypeToAction(event.eventType),
         userId: event.userId,
         userRole: event.data.userRole,
         patientId: event.hipaaCompliance?.patientId,
@@ -526,11 +561,11 @@ export class EventBus extends EventEmitter {
       await this.auditService.createAuditLog({
         eventType: event.eventType as any,
         severityLevel: event.severityLevel as any,
-        action: this.mapEventTypeToAction(event.eventType),
+        action: mapEventTypeToAction(event.eventType),
         userId: event.userId,
         userRole: event.data.userRole,
         patientId: event.data.patientId,
-        resourceType: this.mapEventTypeToResourceType(event.eventType),
+        resourceType: mapEventTypeToResourceType(event.eventType),
         resourceId: event.data.resourceId,
         description: `Clinical event: ${event.eventType}`,
         sessionId: event.sessionId,
@@ -559,10 +594,10 @@ export class EventBus extends EventEmitter {
       await this.auditService.createAuditLog({
         eventType: event.eventType as any,
         severityLevel: event.severityLevel as any,
-        action: this.mapEventTypeToAction(event.eventType),
+        action: mapEventTypeToAction(event.eventType),
         userId: event.userId,
         userRole: event.data.userRole,
-        resourceType: this.mapEventTypeToResourceType(event.eventType),
+        resourceType: mapEventTypeToResourceType(event.eventType),
         resourceId: event.data.resourceId,
         description: `Inventory/Billing event: ${event.eventType}`,
         sessionId: event.sessionId,
@@ -590,7 +625,7 @@ export class EventBus extends EventEmitter {
       await this.auditService.createAuditLog({
         eventType: event.eventType as any,
         severityLevel: event.severityLevel as any,
-        action: this.mapEventTypeToAction(event.eventType),
+        action: mapEventTypeToAction(event.eventType),
         userId: event.userId || "SYSTEM",
         userRole: "SYSTEM" as any,
         resourceType: AUDIT_CONSTANTS.RESOURCE_TYPES.SYSTEM_CONFIG,
@@ -887,60 +922,6 @@ export class EventBus extends EventEmitter {
     }
   }
 
-  private mapEventTypeToAction(eventType: string): string {
-    const actionMap: Record<string, string> = {
-      USER_LOGIN: AUDIT_CONSTANTS.ACTION_TYPES.LOGIN,
-      USER_LOGOUT: AUDIT_CONSTANTS.ACTION_TYPES.LOGOUT,
-      USER_CREATED: AUDIT_CONSTANTS.ACTION_TYPES.CREATE,
-      USER_UPDATED: AUDIT_CONSTANTS.ACTION_TYPES.UPDATE,
-      USER_DEACTIVATED: AUDIT_CONSTANTS.ACTION_TYPES.DELETE,
-      PATIENT_CREATED: AUDIT_CONSTANTS.ACTION_TYPES.CREATE,
-      PATIENT_UPDATED: AUDIT_CONSTANTS.ACTION_TYPES.UPDATE,
-      PATIENT_ACCESSED: AUDIT_CONSTANTS.ACTION_TYPES.ACCESS,
-      EHR_CREATED: AUDIT_CONSTANTS.ACTION_TYPES.CREATE,
-      EHR_UPDATED: AUDIT_CONSTANTS.ACTION_TYPES.UPDATE,
-      EHR_ACCESSED: AUDIT_CONSTANTS.ACTION_TYPES.ACCESS,
-      DOCUMENT_UPLOADED: AUDIT_CONSTANTS.ACTION_TYPES.CREATE,
-      DOCUMENT_ACCESSED: AUDIT_CONSTANTS.ACTION_TYPES.ACCESS,
-      APPOINTMENT_CREATED: AUDIT_CONSTANTS.ACTION_TYPES.CREATE,
-      APPOINTMENT_UPDATED: AUDIT_CONSTANTS.ACTION_TYPES.UPDATE,
-      APPOINTMENT_CANCELLED: AUDIT_CONSTANTS.ACTION_TYPES.DELETE,
-      PRESCRIPTION_CREATED: AUDIT_CONSTANTS.ACTION_TYPES.CREATE,
-      PRESCRIPTION_UPDATED: AUDIT_CONSTANTS.ACTION_TYPES.UPDATE,
-      ORDER_PLACED: AUDIT_CONSTANTS.ACTION_TYPES.CREATE,
-      INVENTORY_UPDATED: AUDIT_CONSTANTS.ACTION_TYPES.UPDATE,
-      INVOICE_CREATED: AUDIT_CONSTANTS.ACTION_TYPES.CREATE,
-      BACKUP_CREATED: AUDIT_CONSTANTS.ACTION_TYPES.CREATE,
-      SYSTEM_ERROR: AUDIT_CONSTANTS.ACTION_TYPES.ERROR,
-    };
-
-    return actionMap[eventType] || AUDIT_CONSTANTS.ACTION_TYPES.ACCESS;
-  }
-
-  private mapEventTypeToResourceType(eventType: string): string {
-    const resourceMap: Record<string, string> = {
-      PATIENT_CREATED: AUDIT_CONSTANTS.RESOURCE_TYPES.PATIENT_RECORD,
-      PATIENT_UPDATED: AUDIT_CONSTANTS.RESOURCE_TYPES.PATIENT_RECORD,
-      PATIENT_ACCESSED: AUDIT_CONSTANTS.RESOURCE_TYPES.PATIENT_RECORD,
-      EHR_CREATED: AUDIT_CONSTANTS.RESOURCE_TYPES.PATIENT_RECORD,
-      EHR_UPDATED: AUDIT_CONSTANTS.RESOURCE_TYPES.PATIENT_RECORD,
-      EHR_ACCESSED: AUDIT_CONSTANTS.RESOURCE_TYPES.PATIENT_RECORD,
-      APPOINTMENT_CREATED: AUDIT_CONSTANTS.RESOURCE_TYPES.APPOINTMENT,
-      APPOINTMENT_UPDATED: AUDIT_CONSTANTS.RESOURCE_TYPES.APPOINTMENT,
-      APPOINTMENT_CANCELLED: AUDIT_CONSTANTS.RESOURCE_TYPES.APPOINTMENT,
-      PRESCRIPTION_CREATED: AUDIT_CONSTANTS.RESOURCE_TYPES.PRESCRIPTION,
-      PRESCRIPTION_UPDATED: AUDIT_CONSTANTS.RESOURCE_TYPES.PRESCRIPTION,
-      INVOICE_CREATED: AUDIT_CONSTANTS.RESOURCE_TYPES.BILLING_INFO,
-    };
-
-    return (
-      resourceMap[eventType] || AUDIT_CONSTANTS.RESOURCE_TYPES.SYSTEM_CONFIG
-    );
-  }
-
-  /**
-   * Get processing statistics
-   */
   getProcessingStats() {
     return {
       ...this.processingStats,
@@ -950,9 +931,6 @@ export class EventBus extends EventEmitter {
     };
   }
 
-  /**
-   * Graceful shutdown
-   */
   async shutdown(): Promise<void> {
     try {
       logger.info("Shutting down EventBus...");

@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { logger } from "@/utils/logger";
+import { MS_ADMIN_AUDIT_CONFIG } from "@/config/environments";
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -28,7 +29,7 @@ export const authMiddleware = (
       return;
     }
 
-    const jwtSecret = process.env.JWT_SECRET;
+    const jwtSecret = MS_ADMIN_AUDIT_CONFIG.JWT_SECRET;
     if (!jwtSecret) {
       logger.error("JWT_SECRET not configured");
       res.status(500).json({ error: "Server configuration error" });

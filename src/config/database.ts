@@ -1,6 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 import { logger } from "@/utils/logger";
+import { MS_ADMIN_AUDIT_CONFIG } from "./environments";
 
+/**
+ * DatabaseConfig is a singleton class that manages the PrismaClient instance.
+ * It provides methods to get the instance and disconnect from the database.
+ */
 export class DatabaseConfig {
   private static instance: PrismaClient;
 
@@ -16,7 +21,7 @@ export class DatabaseConfig {
         errorFormat: "pretty",
       });
 
-      if (process.env.NODE_ENV === "development") {
+      if (MS_ADMIN_AUDIT_CONFIG.NODE_ENV === "development") {
         DatabaseConfig.instance.$on("query" as never, (e: any) => {
           console.log("Query: " + e.query);
           console.log("Params: " + e.params);

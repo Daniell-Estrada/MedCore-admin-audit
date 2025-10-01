@@ -1,21 +1,22 @@
 import cors from "cors";
 import express from "express";
-import margan from "morgan";
 import compression from "compression";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import { PrismaClient } from "@prisma/client";
 import { logger } from "@/utils/logger";
 import routes from "@/router/routes";
-import { errorHandler } from "@/middleware/errorHandler";
 import { requestLogger } from "@/middleware/requestLogger";
+import { eventBus } from "@/services/EventBus";
+import rateLimit from "express-rate-limit";
+import { MS_ADMIN_AUDIT_CONFIG } from "./config/environments";
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
 
-const PORT = process.env.PORT || 3015;
+const PORT = MS_ADMIN_AUDIT_CONFIG.PORT;
 
 export const prisma = new PrismaClient({
   log: ["query", "info", "warn", "error"],
@@ -42,15 +43,17 @@ app.use(
 
 app.use(
   cors({
-    origin: process.env.ALLOWED_ORIGINS?.split(",") || "*",
+    origin: MS_ADMIN_AUDIT_CONFIG.ALLOWED_ORIGINS,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-User-Id",
-      "X-Event-Source",
-      "X-User-Role",
-    ],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
+
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 1000,
+    message: "Too many requests from this IP, please try again later.",
   }),
 );
 
@@ -59,17 +62,24 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use(requestLogger);
-app.use(errorHandler);
 
-// Logging middleware
-app.use(
-  margan("combined", {
-    stream: { write: (message) => logger.info(message.trim()) },
-  }),
-);
-
-// API routes
 app.use("/api/v1", routes);
+
+async function startServer() {
+  try {
+    await eventBus.initialize();
+
+    app.listen(PORT, () => {
+      logger.info(`ms-admin-audit service running on port ${PORT}`, {
+        port: PORT,
+        environment: MS_ADMIN_AUDIT_CONFIG.NODE_ENV,
+      });
+    });
+  } catch (error) {
+    logger.error("Failed to start server", { error });
+    process.exit(1);
+  }
+}
 
 process.on("SIGINT", async () => {
   logger.info("SIGINT received, shutting down gracefully");
@@ -83,12 +93,4 @@ process.on("SIGTERM", async () => {
   process.exit(0);
 });
 
-try {
-  app.listen(PORT, async () => {
-    await prisma.$connect();
-    console.log(`Server is running on http://localhost:${PORT}`);
-  });
-} catch (error) {
-  logger.error("Failed to start the server", { error });
-  process.exit(1);
-}
+startServer();

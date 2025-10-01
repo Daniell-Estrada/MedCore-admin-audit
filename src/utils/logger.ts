@@ -1,6 +1,8 @@
 import winston from "winston";
 import path from "path";
 
+import fs from "fs";
+import { MS_ADMIN_AUDIT_CONFIG } from "@/config/environments";
 /**
  * Custom Winston logger configuration for HIPAA compliance.
  * Logs are structured in JSON format with necessary metadata.
@@ -37,11 +39,12 @@ const hipaaFormat = winston.format.combine(
  * - Handles uncaught exceptions and unhandled promise rejections
  */
 export const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || "info",
+  level: MS_ADMIN_AUDIT_CONFIG.LOG_LEVEL,
   format: hipaaFormat,
   defaultMeta: {
     service: "ms-admin-audit",
-    version: process.env.npm_package_version || "1.0.0",
+    version: "1.0.0",
+    environment: MS_ADMIN_AUDIT_CONFIG.NODE_ENV,
   },
   transports: [
     new winston.transports.Console({
@@ -143,7 +146,6 @@ export const securityLogger = winston.createLogger({
   ],
 });
 
-import fs from "fs";
 const logDir = path.join(process.cwd(), "logs");
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
