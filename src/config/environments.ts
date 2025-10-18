@@ -9,6 +9,7 @@ export const MS_ADMIN_AUDIT_CONFIG = {
   NODE_ENV: process.env.NODE_ENV || "development",
   JWT_SECRET: process.env.JWT_SECRET,
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
+  VERCEL: Boolean(process.env.VERCEL || false),
 } as const;
 
 // Azure Event Hub configuration

@@ -67,22 +67,25 @@ app.use(requestLogger);
 
 app.use("/api/v1", routes);
 
-// Error handler middleware (debe ir al final)
 app.use(errorHandler);
 
 async function startServer() {
   try {
     await eventBus.initialize();
 
-    app.listen(PORT, () => {
-      logger.info(`ms-admin-audit service running on port ${PORT}`, {
-        port: PORT,
-        environment: MS_ADMIN_AUDIT_CONFIG.NODE_ENV,
+    if (!MS_ADMIN_AUDIT_CONFIG.VERCEL) {
+      app.listen(PORT, () => {
+        logger.info(`ms-admin-audit service running on port ${PORT}`, {
+          port: PORT,
+          environment: MS_ADMIN_AUDIT_CONFIG.NODE_ENV,
+        });
       });
-    });
+    }
   } catch (error) {
     logger.error("Failed to start server", { error });
-    process.exit(1);
+    if (!MS_ADMIN_AUDIT_CONFIG.VERCEL) {
+      process.exit(1);
+    }
   }
 }
 
@@ -100,6 +103,8 @@ process.on("SIGTERM", async () => {
   process.exit(0);
 });
 
-startServer();
+if (!MS_ADMIN_AUDIT_CONFIG.VERCEL) {
+  startServer();
+}
 
 export default app;
