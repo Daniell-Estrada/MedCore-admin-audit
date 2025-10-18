@@ -15,5 +15,5 @@
   "env": {
     "NODE_ENV": "production"
   },
-  "installCommand": "npm ci && npx prisma generate"
+  "buildCommand": "npm run vercel-build"
 }

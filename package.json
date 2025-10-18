@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "_moduleAliases": {
-    "@": "dist"
+    "@": "./dist"
   },
   "scripts": {
     "start": "node dist/index.js",
