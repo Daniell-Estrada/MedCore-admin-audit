@@ -701,14 +701,24 @@ export class EventBus extends EventEmitter {
         clearInterval(this.connectionMonitoringInterval);
       }
 
+      AzureEventHubConfig.beginShutdown();
+
       for (const [hubName, consumer] of this.consumers) {
-        await consumer.disconnect();
-        logger.info("Consumer disconnected", { hubName });
+        try {
+          await consumer.disconnect();
+          logger.info("Consumer disconnected", { hubName });
+        } catch (e) {
+          logger.warn("Consumer disconnect warning", { hubName, error: e });
+        }
       }
 
       for (const [hubName, producer] of this.producers) {
-        await producer.disconnect();
-        logger.info("Producer disconnected", { hubName });
+        try {
+          await producer.disconnect();
+          logger.info("Producer disconnected", { hubName });
+        } catch (e) {
+          logger.warn("Producer disconnect warning", { hubName, error: e });
+        }
       }
 
       await AzureEventHubConfig.disconnectAll();

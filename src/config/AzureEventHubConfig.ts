@@ -4,6 +4,8 @@ import {
   type Consumer,
   type KafkaConfig,
   Partitioners,
+  logLevel as KafkaLogLevel,
+  type LogEntry,
 } from "kafkajs";
 import { logger } from "@/utils/logger";
 import { AZURE_EVENT_HUB_CONSTANTS } from "@/constants/azureConstants";
@@ -22,6 +24,11 @@ export interface EventHubConnection {
 export class AzureEventHubConfig {
   private static kafka: Kafka | null = null;
   private static connections: Map<string, EventHubConnection> = new Map();
+  private static shuttingDown = false;
+
+  static beginShutdown(): void {
+    this.shuttingDown = true;
+  }
 
   static getInstance(): Kafka {
     if (!this.kafka) {
@@ -55,7 +62,41 @@ export class AzureEventHubConfig {
             return true;
           },
         },
-        logLevel: 1,
+        logLevel: KafkaLogLevel.ERROR,
+        logCreator: () => (entry: LogEntry) => {
+          if (
+            AzureEventHubConfig.shuttingDown &&
+            typeof entry.log?.message === "string" &&
+            entry.log.message.includes("Connection error: read ECONNRESET")
+          ) {
+            return;
+          }
+
+          const payload = {
+            namespace: entry.namespace,
+            message: entry.log?.message,
+            broker: (entry.log as any)?.broker,
+            clientId: (entry.log as any)?.clientId,
+            stack: (entry.log as any)?.stack,
+          };
+
+          switch (entry.level) {
+            case KafkaLogLevel.ERROR:
+              logger.error("[kafkajs]", payload);
+              break;
+            case KafkaLogLevel.WARN:
+              logger.warn("[kafkajs]", payload);
+              break;
+            case KafkaLogLevel.INFO:
+              logger.info("[kafkajs]", payload);
+              break;
+            case KafkaLogLevel.DEBUG:
+              logger.debug("[kafkajs]", payload);
+              break;
+            default:
+              break;
+          }
+        },
       };
 
       this.kafka = new Kafka(kafkaConfig);
@@ -174,18 +215,44 @@ export class AzureEventHubConfig {
   }
 
   static async disconnectAll(): Promise<void> {
+    this.beginShutdown();
+
     const disconnectPromises: Promise<void>[] = [];
 
     for (const [eventHubName, connection] of this.connections) {
-      if (connection.isConnected) {
-        disconnectPromises.push(
-          connection.producer.disconnect(),
-          connection.consumer.disconnect(),
-        );
-        connection.isConnected = false;
+      if (!connection.isConnected) continue;
 
-        logger.info("Disconnecting from Event Hub", { eventHubName });
+      logger.info("Disconnecting from Event Hub", { eventHubName });
+
+      disconnectPromises.push(
+        (async () => {
+          try {
+            await connection.producer.disconnect();
+          } catch (e: any) {
+            const msg = e?.message || String(e);
+            if (!this.shuttingDown || !msg.includes("ECONNRESET")) {
+              logger.warn("Producer disconnect warning", { eventHubName, error: e });
+            }
+          }
+        })(),
+      );
+
+      if (connection.consumer) {
+        disconnectPromises.push(
+          (async () => {
+            try {
+              await connection.consumer!.disconnect();
+            } catch (e: any) {
+              const msg = e?.message || String(e);
+              if (!this.shuttingDown || !msg.includes("ECONNRESET")) {
+                logger.warn("Consumer disconnect warning", { eventHubName, error: e });
+              }
+            }
+          })(),
+        );
       }
+
+      connection.isConnected = false;
     }
 
     await Promise.all(disconnectPromises);
