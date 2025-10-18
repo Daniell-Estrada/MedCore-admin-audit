@@ -14,7 +14,7 @@ const router = Router();
 router.use(
   "/audit",
   authMiddleware,
-  requireRole(["admin", "auditor"]),
+  requireRole(["administrador", "auditor"]),
   auditRoutes(auditController),
 );
 

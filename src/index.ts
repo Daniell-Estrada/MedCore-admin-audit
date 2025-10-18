@@ -71,8 +71,6 @@ app.use(errorHandler);
 
 async function startServer() {
   try {
-    await eventBus.initialize();
-
     if (!MS_ADMIN_AUDIT_CONFIG.VERCEL) {
       app.listen(PORT, () => {
         logger.info(`ms-admin-audit service running on port ${PORT}`, {
@@ -81,6 +79,15 @@ async function startServer() {
         });
       });
     }
+
+    void eventBus
+      .initialize()
+      .then(() => {
+        logger.info("EventBus initialized successfully");
+      })
+      .catch((error) => {
+        logger.error("EventBus initialization failed", { error });
+      });
   } catch (error) {
     logger.error("Failed to start server", { error });
     if (!MS_ADMIN_AUDIT_CONFIG.VERCEL) {
