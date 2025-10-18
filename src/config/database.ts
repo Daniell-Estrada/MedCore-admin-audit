@@ -23,9 +23,11 @@ export class DatabaseConfig {
 
       if (MS_ADMIN_AUDIT_CONFIG.NODE_ENV === "development") {
         DatabaseConfig.instance.$on("query" as never, (e: any) => {
-          console.log("Query: " + e.query);
-          console.log("Params: " + e.params);
-          console.log("Duration: " + e.duration + "ms");
+          logger.debug("Database query executed", {
+            query: e.query,
+            params: e.params,
+            duration: `${e.duration}ms`
+          });
         });
       }
 

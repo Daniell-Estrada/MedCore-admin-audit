@@ -1,13 +1,13 @@
 import { Router } from "express";
 import { AuditController } from "@/controllers/AuditController";
 import { auditRoutes } from "@/router/auditRoutes";
-import { AuditService } from "@/services/AuditService";
+import { AuditRepository } from "@/repositories/AuditRepository";
 import { authMiddleware } from "@/middleware/authMiddleware";
 import { requireRole } from "@/middleware/rbac";
 
-const auditService = new AuditService();
+const auditRepository = new AuditRepository();
 
-const auditController = new AuditController(auditService);
+const auditController = new AuditController(auditRepository);
 
 const router = Router();
 

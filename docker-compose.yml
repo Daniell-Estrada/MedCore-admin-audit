@@ -1,0 +1,36 @@
+services:
+  api:
+    image: ms-admin-audit:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "3005:3005"
+    volumes:
+      - audit_backups:/app/backups
+      - audit_logs:/app/logs
+    environment:
+      - NODE_OPTIONS=--max-old-space-size=1024
+    env_file:
+      - .env
+    networks:
+      - medcore-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/api/v1/health"]
+      interval: 45s
+      timeout: 15s
+      retries: 5
+      start_period: 90s
+
+volumes:
+  audit_backups:
+    driver: local
+  audit_logs:
+    driver: local
+
+networks:
+  medcore-network:
+    driver: bridge
+    external: true

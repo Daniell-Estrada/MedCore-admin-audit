@@ -4,6 +4,8 @@ export const MS_ADMIN_AUDIT_CONFIG = {
   PORT: parseInt(process.env.PORT || "3015"),
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS?.split(",") || [],
   LOG_LEVEL: process.env.LOG_LEVEL || "info",
+  LOG_DIR: process.env.LOG_DIR || "./logs",
+  BACKUP_DIR: process.env.BACKUP_DIR || "./backups",
   NODE_ENV: process.env.NODE_ENV || "development",
   JWT_SECRET: process.env.JWT_SECRET,
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
@@ -11,14 +13,14 @@ export const MS_ADMIN_AUDIT_CONFIG = {
 
 // Azure Event Hub configuration
 export const AZURE_EVENT_HUB_CONFIG = {
-  CONNECTION_STRING: process.env.AZURE_EVENTHUB_CONNECTION_STRING || "",
-  NAMESPACE: process.env.AZURE_EVENTHUB_NAMESPACE || "",
-  CLIENT_ID: process.env.AZURE_EVENTHUB_CLIENT_ID || "",
-  BROKERS: (process.env.AZURE_EVENTHUB_BROKERS || "").split(","),
-  CONSUMER_GROUP: process.env.AZURE_EVENTHUB_CONSUMER_GROUP || "$Default",
-  PARTITION_COUNT: parseInt(process.env.AZURE_EVENTHUB_PARTITION_COUNT || "4"),
-  MAX_BATCH_SIZE: parseInt(process.env.AZURE_EVENTHUB_MAX_BATCH_SIZE || "100"),
+  CONNECTION_STRING: process.env.AZURE_EVENT_HUB_CONNECTION_STRING || "",
+  NAMESPACE: process.env.AZURE_EVENT_HUB_NAMESPACE || "",
+  CLIENT_ID: process.env.AZURE_EVENT_HUB_CLIENT_ID || "",
+  BROKERS: (process.env.AZURE_EVENT_HUB_BROKERS || "").split(","),
+  CONSUMER_GROUP: process.env.AZURE_EVENT_HUB_CONSUMER_GROUP || "$Default",
+  PARTITION_COUNT: parseInt(process.env.AZURE_EVENT_HUB_PARTITION_COUNT || "4"),
+  MAX_BATCH_SIZE: parseInt(process.env.AZURE_EVENT_HUB_MAX_BATCH_SIZE || "100"),
   MAX_WAIT_TIME_MS: parseInt(
-    process.env.AZURE_EVENTHUB_MAX_WAIT_TIME_MS || "1000",
+    process.env.AZURE_EVENT_HUB_MAX_WAIT_TIME_MS || "3000",
   ),
 } as const;

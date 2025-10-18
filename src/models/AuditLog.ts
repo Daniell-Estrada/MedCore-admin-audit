@@ -10,7 +10,7 @@ export const AuditLogSchema = z.object({
   eventType: z.enum(
     Object.values(AUDIT_CONSTANTS.EVENT_TYPES) as [string, ...string[]],
   ),
-  userId: z.uuid().optional(),
+  userId: z.string().optional(),
   userRole: z
     .enum(Object.values(AUDIT_CONSTANTS.USER_ROLES) as [string, ...string[]])
     .optional(),

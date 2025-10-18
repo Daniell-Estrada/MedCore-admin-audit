@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import type { AuditService } from "@/services/AuditService";
+import { AuditRepository } from "@/repositories/AuditRepository";
 import { logger } from "@/utils/logger";
 import type { AuditEventType, AuditSeverity } from "@/models/AuditLog";
 
@@ -8,7 +8,7 @@ import type { AuditEventType, AuditSeverity } from "@/models/AuditLog";
  * It provides an endpoint to retrieve audit logs with filtering and pagination support.
  */
 export class AuditController {
-  constructor(private auditService: AuditService) {}
+  constructor(private auditRepository: AuditRepository) {}
 
   async getAuditLogs(req: Request, res: Response): Promise<void> {
     try {
@@ -32,7 +32,7 @@ export class AuditController {
         resourceType: resourceType as string,
       };
 
-      const result = await this.auditService.getAuditLogs(
+      const result = await this.auditRepository.getAuditLogs(
         Number.parseInt(page as string),
         Number.parseInt(limit as string),
         filters,

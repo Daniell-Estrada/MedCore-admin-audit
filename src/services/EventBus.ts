@@ -2,7 +2,7 @@ import { EventEmitter } from "events";
 import { v4 as uuidv4 } from "uuid";
 import type { Producer, Consumer, EachMessagePayload } from "kafkajs";
 import { logger, auditLogger, securityLogger } from "@/utils/logger";
-import { AuditService } from "@/services/AuditService";
+import { AuditRepository } from "@/repositories/AuditRepository";
 import { AUDIT_CONSTANTS } from "@/constants/auditConstants";
 import { AzureEventHubConfig } from "@/config/AzureEventHubConfig";
 import { DatabaseConfig } from "@/config/database";
@@ -44,10 +44,12 @@ export interface EventProcessingResult {
  * Integrates with Azure Event Hub for reliable message processing
  */
 export class EventBus extends EventEmitter {
-  private auditService: AuditService;
+  private auditRepository: AuditRepository;
   private producers: Map<string, Producer> = new Map();
   private consumers: Map<string, Consumer> = new Map();
   private isInitialized = false;
+  private connectionMonitoringInterval?: NodeJS.Timeout;
+  private isRecovering = false;
   private processingStats = {
     totalProcessed: 0,
     totalErrors: 0,
@@ -56,14 +58,14 @@ export class EventBus extends EventEmitter {
 
   constructor() {
     super();
-    this.auditService = new AuditService();
-    this.setupEventHandlers();
+    this.auditRepository = new AuditRepository();
   }
 
   /**
    * Initialize Event Hub connections and start consuming events
    */
   async initialize(): Promise<void> {
+    logger.info("Initializing EventBus...");
     if (this.isInitialized) {
       logger.warn("EventBus already initialized");
       return;
@@ -72,12 +74,56 @@ export class EventBus extends EventEmitter {
     try {
       await this.initializeProducers();
       await this.initializeConsumers();
+      this.startConnectionMonitoring();
       this.isInitialized = true;
 
       logger.info("EventBus initialized successfully");
     } catch (error) {
       logger.error("Failed to initialize EventBus", { error });
       throw error;
+    }
+  }
+
+  /**
+   * Start connection monitoring to detect and recover from connection issues
+   */
+  private startConnectionMonitoring(): void {
+    this.connectionMonitoringInterval = setInterval(async () => {
+      if (this.isRecovering) return;
+
+      try {
+        const isHealthy = await AzureEventHubConfig.healthCheck();
+        if (!isHealthy) {
+          logger.warn("Event Hub health check failed, attempting recovery");
+          await this.recoverConnections();
+        }
+      } catch (error) {
+        logger.error("Connection monitoring error", { error });
+      }
+    }, 60000);
+  }
+
+  /**
+   * Recover from connection failures
+   */
+  private async recoverConnections(): Promise<void> {
+    if (this.isRecovering) return;
+
+    this.isRecovering = true;
+    logger.info("Starting connection recovery");
+
+    try {
+      await AzureEventHubConfig.disconnectAll();
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+
+      await this.initializeProducers();
+      await this.initializeConsumers();
+
+      logger.info("Connection recovery completed");
+    } catch (error) {
+      logger.error("Connection recovery failed", { error });
+    } finally {
+      this.isRecovering = false;
     }
   }
 
@@ -101,7 +147,7 @@ export class EventBus extends EventEmitter {
   }
 
   /**
-   * Initialize consumers for relevant event hubs
+   * Initialize consumers for relevant event hubs with staggered startup to reduce rebalancing
    */
   private async initializeConsumers(): Promise<void> {
     const eventHubs = AzureEventHubConfig.getEventHubs();
@@ -134,8 +180,17 @@ export class EventBus extends EventEmitter {
       },
     ];
 
-    for (const { hub, handler, topic } of subscriptions) {
+    // Initialize consumers with staggered delays to reduce rebalancing storms
+    for (let i = 0; i < subscriptions.length; i++) {
+      const { hub, handler, topic } = subscriptions[i];
+
       try {
+        if (i > 0) {
+          const delay = 10000 + i * 5000; // 10s, 15s, 20s, 25s, 30s
+          logger.info(`Delaying consumer initialization for ${hub}`, { delay });
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+
         const connection = await AzureEventHubConfig.getConnection(topic);
 
         if (connection.consumer) {
@@ -149,6 +204,9 @@ export class EventBus extends EventEmitter {
         }
       } catch (error) {
         logger.error("Failed to initialize consumer", { hub, error });
+        // Don't continue immediately, add a delay before next attempt
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        continue;
       }
     }
   }
@@ -164,8 +222,18 @@ export class EventBus extends EventEmitter {
     let eventData: MedCoreAuditEvent;
 
     try {
-      eventData = JSON.parse(message.value?.toString() || "{}");
-      console.log("Received event:", eventData);
+      try {
+        eventData = JSON.parse(message.value?.toString() || "{}");
+      } catch (parseError) {
+        logger.error("Failed to parse message JSON", {
+          topic,
+          partition,
+          parseError,
+          rawMessage: message.value?.toString()?.substring(0, 200),
+        });
+        this.processingStats.totalErrors++;
+        return;
+      }
 
       if (!validateEvent(eventData, eventData.source)) {
         const errors = getEventValidationErrors(
@@ -179,13 +247,20 @@ export class EventBus extends EventEmitter {
           new Error(`Validation errors: ${errors.join(", ")}`),
           topic,
         );
+        this.processingStats.totalErrors++;
         return;
       }
 
-      await this.trackEventProcessing(eventData.eventId, "PROCESSING", topic);
-      await handler(eventData);
+      await this.trackEventProcessing(eventData, "PROCESSING", topic);
 
-      await this.trackEventProcessing(eventData.eventId, "COMPLETED", topic);
+      const handlerPromise = handler(eventData);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Handler timeout")), 30000),
+      );
+
+      await Promise.race([handlerPromise, timeoutPromise]);
+
+      await this.trackEventProcessing(eventData, "COMPLETED", topic);
 
       this.processingStats.totalProcessed++;
       this.processingStats.lastProcessedAt = new Date();
@@ -215,7 +290,7 @@ export class EventBus extends EventEmitter {
    * Track event processing status in database
    */
   private async trackEventProcessing(
-    eventId: string,
+    eventData: MedCoreAuditEvent,
     status: string,
     source: string,
     error?: Error,
@@ -224,7 +299,7 @@ export class EventBus extends EventEmitter {
       const prisma = DatabaseConfig.getInstance();
 
       await prisma.eventProcessingStatus.upsert({
-        where: { eventId },
+        where: { eventId: eventData.eventId },
         update: {
           status,
           processedAt: status === "COMPLETED" ? new Date() : null,
@@ -235,8 +310,8 @@ export class EventBus extends EventEmitter {
         },
         create: {
           id: uuidv4(),
-          eventId,
-          eventType: "UNKNOWN",
+          eventId: eventData.eventId,
+          eventType: eventData.eventType,
           source,
           status,
           processedAt: status === "COMPLETED" ? new Date() : null,
@@ -247,7 +322,7 @@ export class EventBus extends EventEmitter {
       });
     } catch (dbError) {
       logger.error("Failed to track event processing", {
-        eventId,
+        eventId: eventData.eventId,
         error: dbError,
       });
     }
@@ -353,8 +428,6 @@ export class EventBus extends EventEmitter {
     }
   }
 
-  /**
-   */
   private async scheduleRetry(
     event: MedCoreAuditEvent,
     retryCount: number,
@@ -448,31 +521,8 @@ export class EventBus extends EventEmitter {
     }
   }
 
-  /**
-   * Setup internal event handlers
-   */
-  private setupEventHandlers(): void {
-    this.on("user.login", this.handleUserLogin.bind(this));
-    this.on("user.logout", this.handleUserLogout.bind(this));
-    this.on("user.login_failed", this.handleLoginFailed.bind(this));
-    this.on("user.password_changed", this.handlePasswordChanged.bind(this));
-    this.on("user.role_changed", this.handleRoleChanged.bind(this));
-    this.on("user.2fa_enabled", this.handle2FAEnabled.bind(this));
-    this.on("user.session_expired", this.handleSessionExpired.bind(this));
-
-    this.on("system.error", this.handleSystemError.bind(this));
-    this.on("system.maintenance", this.handleMaintenanceEvent.bind(this));
-    this.on("system.backup", this.handleBackupEvent.bind(this));
-  }
-
-  // Event Handlers for different microservices
-
-  /**
-   * Handle security events from ms-security
-   */
   private async handleSecurityEvents(event: any): Promise<void> {
     try {
-      console.log("Handling security event:", event);
       const metadata: Record<string, any> = { ...event.data };
       let mappedEventType = event.eventType;
 
@@ -485,7 +535,7 @@ export class EventBus extends EventEmitter {
           event.data.statusCode >= 400 ? "SECURITY_VIOLATION" : "SYSTEM_ERROR";
       }
 
-      await this.auditService.createAuditLog({
+      await this.auditRepository.createAuditLog({
         eventType: mappedEventType as any,
         severityLevel: event.severityLevel as any,
         action: mapEventTypeToAction(mappedEventType),
@@ -515,14 +565,11 @@ export class EventBus extends EventEmitter {
     }
   }
 
-  /**
-   * Handle patient events from ms-patientEHR
-   */
   private async handlePatientEvents(event: MedCoreAuditEvent): Promise<void> {
     try {
       const metadata: Record<string, any> = { ...event.data };
 
-      await this.auditService.createAuditLog({
+      await this.auditRepository.createAuditLog({
         eventType: event.eventType as any,
         severityLevel: event.severityLevel as any,
         action: mapEventTypeToAction(event.eventType),
@@ -551,14 +598,11 @@ export class EventBus extends EventEmitter {
     }
   }
 
-  /**
-   * Handle clinical events from ms-clinical
-   */
   private async handleClinicalEvents(event: MedCoreAuditEvent): Promise<void> {
     try {
       const metadata: Record<string, any> = { ...event.data };
 
-      await this.auditService.createAuditLog({
+      await this.auditRepository.createAuditLog({
         eventType: event.eventType as any,
         severityLevel: event.severityLevel as any,
         action: mapEventTypeToAction(event.eventType),
@@ -584,14 +628,11 @@ export class EventBus extends EventEmitter {
     }
   }
 
-  /**
-   * Handle inventory events from ms-inventory-billing
-   */
   private async handleInventoryEvents(event: MedCoreAuditEvent): Promise<void> {
     try {
       const metadata: Record<string, any> = { ...event.data };
 
-      await this.auditService.createAuditLog({
+      await this.auditRepository.createAuditLog({
         eventType: event.eventType as any,
         severityLevel: event.severityLevel as any,
         action: mapEventTypeToAction(event.eventType),
@@ -615,14 +656,11 @@ export class EventBus extends EventEmitter {
     }
   }
 
-  /**
-   * Handle system events
-   */
   private async handleSystemEvents(event: MedCoreAuditEvent): Promise<void> {
     try {
       const metadata: Record<string, any> = { ...event.data };
 
-      await this.auditService.createAuditLog({
+      await this.auditRepository.createAuditLog({
         eventType: event.eventType as any,
         severityLevel: event.severityLevel as any,
         action: mapEventTypeToAction(event.eventType),
@@ -646,282 +684,6 @@ export class EventBus extends EventEmitter {
     }
   }
 
-  private async handleUserLogin(eventData: any): Promise<void> {
-    try {
-      const metadata: Record<string, any> = {};
-      if (eventData.department) metadata.department = eventData.department;
-      if (eventData.loginMethod) metadata.loginMethod = eventData.loginMethod;
-
-      await this.auditService.createAuditLog({
-        eventType: AUDIT_CONSTANTS.EVENT_TYPES.USER_LOGIN,
-        severityLevel: AUDIT_CONSTANTS.SEVERITY_LEVELS.INFO,
-        action: AUDIT_CONSTANTS.ACTION_TYPES.LOGIN,
-        userId: eventData.userId,
-        userRole: eventData.role,
-        resourceType: AUDIT_CONSTANTS.RESOURCE_TYPES.USER_ACCOUNT,
-        resourceId: eventData.userId,
-        description: "User logged in successfully",
-        sessionId: eventData.sessionId,
-        ipAddress: eventData.ipAddress,
-        userAgent: eventData.userAgent,
-        metadata,
-        success: true,
-      });
-
-      logger.info("User login event logged", { userId: eventData.userId });
-    } catch (error) {
-      logger.error("Failed to log user login event", { error, eventData });
-    }
-  }
-
-  private async handleUserLogout(eventData: any): Promise<void> {
-    try {
-      await this.auditService.createAuditLog({
-        eventType: AUDIT_CONSTANTS.EVENT_TYPES.USER_LOGOUT,
-        severityLevel: AUDIT_CONSTANTS.SEVERITY_LEVELS.INFO,
-        action: AUDIT_CONSTANTS.ACTION_TYPES.LOGOUT,
-        userId: eventData.userId,
-        userRole: eventData.role,
-        resourceType: AUDIT_CONSTANTS.RESOURCE_TYPES.USER_ACCOUNT,
-        resourceId: eventData.userId,
-        description: "User logged out",
-        sessionId: eventData.sessionId,
-        ipAddress: eventData.ipAddress,
-        metadata: { logoutReason: eventData.reason },
-        success: true,
-      });
-
-      logger.info("User logout event logged", { userId: eventData.userId });
-    } catch (error) {
-      logger.error("Failed to log user logout event", { error, eventData });
-    }
-  }
-
-  private async handleLoginFailed(eventData: any): Promise<void> {
-    try {
-      await this.auditService.createAuditLog({
-        eventType: AUDIT_CONSTANTS.EVENT_TYPES.USER_LOGIN,
-        severityLevel: AUDIT_CONSTANTS.SEVERITY_LEVELS.HIGH,
-        action: AUDIT_CONSTANTS.ACTION_TYPES.LOGIN,
-        userId: eventData.userId,
-        resourceType: AUDIT_CONSTANTS.RESOURCE_TYPES.USER_ACCOUNT,
-        resourceId: eventData.userId,
-        description: "Failed login attempt",
-        ipAddress: eventData.ipAddress,
-        userAgent: eventData.userAgent,
-        metadata: {
-          failureReason: eventData.reason,
-          attemptCount: eventData.attemptCount,
-        },
-        success: false,
-        errorMessage: eventData.reason,
-      });
-
-      securityLogger.warn("Failed login attempt logged", {
-        userId: eventData.userId,
-        reason: eventData.reason,
-      });
-    } catch (error) {
-      logger.error("Failed to log login failure event", { error, eventData });
-    }
-  }
-
-  private async handlePasswordChanged(eventData: any): Promise<void> {
-    try {
-      await this.auditService.createAuditLog({
-        eventType: AUDIT_CONSTANTS.EVENT_TYPES.USER_UPDATED,
-        severityLevel: AUDIT_CONSTANTS.SEVERITY_LEVELS.MEDIUM,
-        action: AUDIT_CONSTANTS.ACTION_TYPES.UPDATE,
-        userId: eventData.userId,
-        userRole: eventData.role,
-        resourceType: AUDIT_CONSTANTS.RESOURCE_TYPES.USER_ACCOUNT,
-        resourceId: eventData.userId,
-        description: "User password changed",
-        sessionId: eventData.sessionId,
-        ipAddress: eventData.ipAddress,
-        metadata: { changeMethod: eventData.method },
-        success: true,
-      });
-
-      logger.info("Password change event logged", { userId: eventData.userId });
-    } catch (error) {
-      logger.error("Failed to log password change event", { error, eventData });
-    }
-  }
-
-  private async handleRoleChanged(eventData: any): Promise<void> {
-    try {
-      await this.auditService.createAuditLog({
-        eventType: AUDIT_CONSTANTS.EVENT_TYPES.USER_UPDATED,
-        severityLevel: AUDIT_CONSTANTS.SEVERITY_LEVELS.HIGH,
-        action: AUDIT_CONSTANTS.ACTION_TYPES.UPDATE,
-        userId: eventData.adminUserId,
-        userRole: eventData.adminRole,
-        targetUserId: eventData.targetUserId,
-        resourceType: AUDIT_CONSTANTS.RESOURCE_TYPES.USER_ACCOUNT,
-        resourceId: eventData.targetUserId,
-        description: "User role changed",
-        sessionId: eventData.sessionId,
-        ipAddress: eventData.ipAddress,
-        metadata: {
-          oldRole: eventData.oldRole,
-          newRole: eventData.newRole,
-        },
-        success: true,
-      });
-
-      logger.info("Role change event logged", {
-        targetUserId: eventData.targetUserId,
-        oldRole: eventData.oldRole,
-        newRole: eventData.newRole,
-      });
-    } catch (error) {
-      logger.error("Failed to log role change event", { error, eventData });
-    }
-  }
-
-  private async handle2FAEnabled(eventData: any): Promise<void> {
-    try {
-      await this.auditService.createAuditLog({
-        eventType: AUDIT_CONSTANTS.EVENT_TYPES.USER_UPDATED,
-        severityLevel: AUDIT_CONSTANTS.SEVERITY_LEVELS.MEDIUM,
-        action: AUDIT_CONSTANTS.ACTION_TYPES.UPDATE,
-        userId: eventData.userId,
-        userRole: eventData.role,
-        resourceType: AUDIT_CONSTANTS.RESOURCE_TYPES.USER_ACCOUNT,
-        resourceId: eventData.userId,
-        description: "Two-factor authentication enabled",
-        sessionId: eventData.sessionId,
-        ipAddress: eventData.ipAddress,
-        metadata: { method: eventData.method },
-        success: true,
-      });
-
-      logger.info("2FA enabled event logged", { userId: eventData.userId });
-    } catch (error) {
-      logger.error("Failed to log 2FA enabled event", { error, eventData });
-    }
-  }
-
-  private async handleSessionExpired(eventData: any): Promise<void> {
-    try {
-      await this.auditService.createAuditLog({
-        eventType: AUDIT_CONSTANTS.EVENT_TYPES.USER_LOGOUT,
-        severityLevel: AUDIT_CONSTANTS.SEVERITY_LEVELS.INFO,
-        action: AUDIT_CONSTANTS.ACTION_TYPES.LOGOUT,
-        userId: eventData.userId,
-        userRole: eventData.role,
-        resourceType: AUDIT_CONSTANTS.RESOURCE_TYPES.USER_ACCOUNT,
-        resourceId: eventData.userId,
-        description: "User session expired",
-        sessionId: eventData.sessionId,
-        metadata: {
-          expirationReason: "TIMEOUT",
-          lastActivity: eventData.lastActivity,
-        },
-        success: true,
-      });
-
-      logger.info("Session expiration event logged", {
-        userId: eventData.userId,
-      });
-    } catch (error) {
-      logger.error("Failed to log session expiration event", {
-        error,
-        eventData,
-      });
-    }
-  }
-
-  private async handleSystemError(eventData: any): Promise<void> {
-    try {
-      await this.auditService.createAuditLog({
-        eventType: AUDIT_CONSTANTS.EVENT_TYPES.SYSTEM_ERROR,
-        severityLevel:
-          eventData.severity || AUDIT_CONSTANTS.SEVERITY_LEVELS.HIGH,
-        action: AUDIT_CONSTANTS.ACTION_TYPES.ERROR,
-        userId: "SYSTEM",
-        userRole: AUDIT_CONSTANTS.USER_ROLES.SYSTEM,
-        resourceType: AUDIT_CONSTANTS.RESOURCE_TYPES.SYSTEM_CONFIG,
-        description: `System error: ${eventData.message}`,
-        metadata: {
-          errorCode: eventData.code,
-          stackTrace: eventData.stack,
-          component: eventData.component,
-        },
-        success: false,
-        errorMessage: eventData.message,
-      });
-
-      logger.error("System error event logged", {
-        message: eventData.message,
-        code: eventData.code,
-      });
-    } catch (error) {
-      logger.error("Failed to log system error event", { error, eventData });
-    }
-  }
-
-  private async handleMaintenanceEvent(eventData: any): Promise<void> {
-    try {
-      await this.auditService.createAuditLog({
-        eventType: AUDIT_CONSTANTS.EVENT_TYPES.MAINTENANCE_SCHEDULED,
-        severityLevel: AUDIT_CONSTANTS.SEVERITY_LEVELS.MEDIUM,
-        action: AUDIT_CONSTANTS.ACTION_TYPES.UPDATE,
-        userId: eventData.scheduledBy,
-        userRole: AUDIT_CONSTANTS.USER_ROLES.ADMIN,
-        resourceType: AUDIT_CONSTANTS.RESOURCE_TYPES.SYSTEM_CONFIG,
-        description: `Maintenance ${eventData.action}: ${eventData.title}`,
-        metadata: {
-          startTime: eventData.startTime,
-          endTime: eventData.endTime,
-          affectedServices: eventData.affectedServices,
-        },
-        success: true,
-      });
-
-      logger.info("Maintenance event logged", {
-        action: eventData.action,
-        title: eventData.title,
-      });
-    } catch (error) {
-      logger.error("Failed to log maintenance event", { error, eventData });
-    }
-  }
-
-  private async handleBackupEvent(eventData: any): Promise<void> {
-    try {
-      await this.auditService.createAuditLog({
-        eventType: eventData.success
-          ? AUDIT_CONSTANTS.EVENT_TYPES.BACKUP_CREATED
-          : AUDIT_CONSTANTS.EVENT_TYPES.SYSTEM_ERROR,
-        severityLevel: eventData.success
-          ? AUDIT_CONSTANTS.SEVERITY_LEVELS.INFO
-          : AUDIT_CONSTANTS.SEVERITY_LEVELS.HIGH,
-        action: AUDIT_CONSTANTS.ACTION_TYPES.CREATE,
-        userId: eventData.initiatedBy || "SYSTEM",
-        userRole: AUDIT_CONSTANTS.USER_ROLES.SYSTEM,
-        resourceType: AUDIT_CONSTANTS.RESOURCE_TYPES.SYSTEM_CONFIG,
-        description: `Backup ${eventData.success ? "completed" : "failed"}`,
-        metadata: {
-          backupType: eventData.type,
-          filePath: eventData.filePath,
-          fileSize: eventData.fileSize,
-          duration: eventData.duration,
-        },
-        success: eventData.success,
-        errorMessage: eventData.error,
-      });
-
-      logger.info("Backup event logged", {
-        success: eventData.success,
-        type: eventData.type,
-      });
-    } catch (error) {
-      logger.error("Failed to log backup event", { error, eventData });
-    }
-  }
-
   getProcessingStats() {
     return {
       ...this.processingStats,
@@ -934,6 +696,10 @@ export class EventBus extends EventEmitter {
   async shutdown(): Promise<void> {
     try {
       logger.info("Shutting down EventBus...");
+
+      if (this.connectionMonitoringInterval) {
+        clearInterval(this.connectionMonitoringInterval);
+      }
 
       for (const [hubName, consumer] of this.consumers) {
         await consumer.disconnect();

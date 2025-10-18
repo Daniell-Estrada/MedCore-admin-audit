@@ -1,17 +1,8 @@
 /**
- * These constants are used throughout the audit logging system to ensure consistency and maintainability.
+ * This module defines constants for an audit logging system in a healthcare application.
  */
 
 export const AUDIT_CONSTANTS = {
-  LOG_RETENTION_YEARS: 7,
-  LOG_RETENTION_DAYS: 7 * 365,
-
-  BACKUP_RETENTION_DAYS: 30,
-  BACKUP_SCHEDULE: "0 2 * * *",
-
-  DEFAULT_SESSION_TIMEOUT: 30 * 60 * 1000,
-  MAX_SESSION_TIMEOUT: 8 * 60 * 60 * 1000,
-
   EVENT_TYPES: {
     USER_LOGIN: "USER_LOGIN",
     USER_LOGOUT: "USER_LOGOUT",

@@ -55,14 +55,14 @@ export const logger = winston.createLogger({
     }),
 
     new winston.transports.File({
-      filename: path.join(process.cwd(), "logs", "app.log"),
+      filename: path.join(MS_ADMIN_AUDIT_CONFIG.BACKUP_DIR, "app.log"),
       maxsize: 10 * 1024 * 1024,
       maxFiles: 10,
       tailable: true,
     }),
 
     new winston.transports.File({
-      filename: path.join(process.cwd(), "logs", "error.log"),
+      filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "error.log"),
       level: "error",
       maxsize: 10 * 1024 * 1024,
       maxFiles: 5,
@@ -70,7 +70,7 @@ export const logger = winston.createLogger({
     }),
 
     new winston.transports.File({
-      filename: path.join(process.cwd(), "logs", "audit.log"),
+      filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "audit.log"),
       level: "info",
       maxsize: 50 * 1024 * 1024,
       maxFiles: 50,
@@ -84,13 +84,13 @@ export const logger = winston.createLogger({
 
   exceptionHandlers: [
     new winston.transports.File({
-      filename: path.join(process.cwd(), "logs", "exceptions.log"),
+      filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "exceptions.log"),
     }),
   ],
 
   rejectionHandlers: [
     new winston.transports.File({
-      filename: path.join(process.cwd(), "logs", "rejections.log"),
+      filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "rejections.log"),
     }),
   ],
 });
@@ -109,7 +109,7 @@ export const auditLogger = winston.createLogger({
   },
   transports: [
     new winston.transports.File({
-      filename: path.join(process.cwd(), "logs", "audit-trail.log"),
+      filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "audit-trail.log"),
       maxsize: 100 * 1024 * 1024,
       maxFiles: 100,
       tailable: true,
@@ -131,7 +131,7 @@ export const securityLogger = winston.createLogger({
   },
   transports: [
     new winston.transports.File({
-      filename: path.join(process.cwd(), "logs", "security.log"),
+      filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "security.log"),
       maxsize: 50 * 1024 * 1024,
       maxFiles: 20,
       tailable: true,
@@ -146,7 +146,7 @@ export const securityLogger = winston.createLogger({
   ],
 });
 
-const logDir = path.join(process.cwd(), "logs");
+const logDir = path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR);
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }

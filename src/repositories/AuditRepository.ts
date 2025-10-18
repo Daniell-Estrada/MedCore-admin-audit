@@ -39,11 +39,11 @@ export interface AuditQueryResult {
 }
 
 /**
- * AuditService class responsible for managing audit logs.
- * This service provides methods to create and handle audit logs,
+ * AuditRepository class responsible for managing audit logs.
+ * This repository provides methods to create and handle audit logs,
  * including special handling for critical and HIPAA-sensitive events.
  */
-export class AuditService {
+export class AuditRepository {
   private prisma: PrismaClient;
 
   constructor() {

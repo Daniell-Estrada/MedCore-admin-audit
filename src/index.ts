@@ -1,3 +1,4 @@
+// import "module-alias/register";
 import cors from "cors";
 import express from "express";
 import compression from "compression";
@@ -9,6 +10,7 @@ import routes from "@/router/routes";
 import { requestLogger } from "@/middleware/requestLogger";
 import { eventBus } from "@/services/EventBus";
 import rateLimit from "express-rate-limit";
+import { errorHandler } from "@/middleware/errorHandler";
 import { MS_ADMIN_AUDIT_CONFIG } from "./config/environments";
 
 // Load environment variables
@@ -65,6 +67,9 @@ app.use(requestLogger);
 
 app.use("/api/v1", routes);
 
+// Error handler middleware (debe ir al final)
+app.use(errorHandler);
+
 async function startServer() {
   try {
     await eventBus.initialize();
@@ -83,12 +88,14 @@ async function startServer() {
 
 process.on("SIGINT", async () => {
   logger.info("SIGINT received, shutting down gracefully");
+  await eventBus.shutdown();
   await prisma.$disconnect();
   process.exit(0);
 });
 
 process.on("SIGTERM", async () => {
   logger.info("SIGTERM received, shutting down gracefully");
+  await eventBus.shutdown();
   await prisma.$disconnect();
   process.exit(0);
 });

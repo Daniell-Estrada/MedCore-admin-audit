@@ -41,12 +41,13 @@ export class AzureEventHubConfig {
           username: "$ConnectionString",
           password: connectionString,
         },
-        connectionTimeout: 30000,
-        requestTimeout: 60000,
+        connectionTimeout: 60000,
+        requestTimeout: 120000,
+        enforceRequestTimeout: false,
         retry: {
-          initialRetryTime: 300,
+          initialRetryTime: 1000,
           retries: 8,
-          maxRetryTime: 30000,
+          maxRetryTime: 60000,
           factor: 2,
           multiplier: 1.5,
           restartOnFailure: async (e) => {
@@ -54,6 +55,7 @@ export class AzureEventHubConfig {
             return true;
           },
         },
+        logLevel: 1,
       };
 
       this.kafka = new Kafka(kafkaConfig);
@@ -72,13 +74,14 @@ export class AzureEventHubConfig {
     const producer = kafka.producer({
       maxInFlightRequests: 5,
       idempotent: false,
-      transactionTimeout: 30000,
-      createPartitioner: Partitioners.LegacyPartitioner,
+      transactionTimeout: 60000,
+      createPartitioner: Partitioners.DefaultPartitioner,
       retry: {
-        initialRetryTime: 100,
+        initialRetryTime: 1000,
         retries: 5,
-        maxRetryTime: 30000,
+        maxRetryTime: 60000,
       },
+      allowAutoTopicCreation: false,
     });
 
     await producer.connect();
@@ -88,44 +91,45 @@ export class AzureEventHubConfig {
   }
   static async createConsumer(
     eventHubName: string,
-    consumerGroup?: string,
+    consumerGroup: string,
   ): Promise<Consumer> {
     const kafka = this.getInstance();
-    const groupId = consumerGroup || AZURE_EVENT_HUB_CONFIG.CONSUMER_GROUP;
 
     const consumer = kafka.consumer({
-      groupId: groupId,
-      sessionTimeout: 45000,
-      heartbeatInterval: 15000,
-      maxWaitTimeInMs: 5000,
+      groupId: consumerGroup,
+      sessionTimeout: 150000,
+      heartbeatInterval: 30000,
+      maxWaitTimeInMs: AZURE_EVENT_HUB_CONFIG.MAX_WAIT_TIME_MS,
+      rebalanceTimeout: 180000,
       retry: {
-        initialRetryTime: 300,
+        initialRetryTime: 1000,
         retries: 5,
-        maxRetryTime: 30000,
+        maxRetryTime: 60000,
       },
       allowAutoTopicCreation: false,
       readUncommitted: false,
+      metadataMaxAge: 300000,
     });
 
     await consumer.connect();
+    logger.info("Consumer connected to Event Hub", {
+      eventHubName,
+      consumerGroup,
+    });
+
     await consumer.subscribe({
       topic: eventHubName,
       fromBeginning: false,
     });
 
-    logger.info("Consumer connected to Event Hub", {
-      eventHubName,
-      consumerGroup: groupId,
-    });
-
     return consumer;
   }
+
   static async getConnection(
     eventHubName: string,
   ): Promise<EventHubConnection> {
     if (!this.connections.has(eventHubName)) {
       const producer = await this.createProducer(eventHubName);
-
       const shouldCreateConsumer = [
         AZURE_EVENT_HUB_CONSTANTS.SECURITY,
         AZURE_EVENT_HUB_CONSTANTS.PATIENT,
@@ -136,7 +140,11 @@ export class AzureEventHubConfig {
 
       let consumer;
       if (shouldCreateConsumer) {
-        consumer = await this.createConsumer(eventHubName);
+        const topicSuffix = eventHubName
+          .replace("medcore-", "")
+          .replace("-events", "");
+        const uniqueConsumerGroup = `${AZURE_EVENT_HUB_CONFIG.CONSUMER_GROUP}-${topicSuffix}`;
+        consumer = await this.createConsumer(eventHubName, uniqueConsumerGroup);
       }
 
       const connection: EventHubConnection = {
