@@ -1,15 +1,16 @@
-// Environment configuration for the microservice
+const IS_VERCEL = !!process.env.VERCEL && process.env.VERCEL !== "false" && process.env.VERCEL !== "0";
+
 export const MS_ADMIN_AUDIT_CONFIG = {
   DATABASE_URL: process.env.DATABASE_URL || "",
   PORT: parseInt(process.env.PORT || "3015"),
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS?.split(",") || [],
   LOG_LEVEL: process.env.LOG_LEVEL || "info",
-  LOG_DIR: process.env.LOG_DIR || "./logs",
-  BACKUP_DIR: process.env.BACKUP_DIR || "./backups",
+  LOG_DIR: process.env.LOG_DIR || (IS_VERCEL ? "/tmp/logs" : "./logs"),
+  BACKUP_DIR: process.env.BACKUP_DIR || (IS_VERCEL ? "/tmp/backups" : "./backups"),
   NODE_ENV: process.env.NODE_ENV || "development",
   JWT_SECRET: process.env.JWT_SECRET,
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
-  VERCEL: Boolean(process.env.VERCEL || false),
+  VERCEL: IS_VERCEL,
 } as const;
 
 // Azure Event Hub configuration

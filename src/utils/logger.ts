@@ -3,6 +3,7 @@ import path from "path";
 
 import fs from "fs";
 import { MS_ADMIN_AUDIT_CONFIG } from "@/config/environments";
+
 /**
  * Custom Winston logger configuration for HIPAA compliance.
  * Logs are structured in JSON format with necessary metadata.
@@ -38,6 +39,42 @@ const hipaaFormat = winston.format.combine(
  * - Logs security events to a separate file
  * - Handles uncaught exceptions and unhandled promise rejections
  */
+const baseConsoleTransport = new winston.transports.Console({
+  format: winston.format.combine(
+    winston.format.colorize(),
+    winston.format.simple(),
+  ),
+});
+
+const fileTransports: winston.transport[] = MS_ADMIN_AUDIT_CONFIG.VERCEL
+  ? []
+  : [
+      new winston.transports.File({
+        filename: path.join(MS_ADMIN_AUDIT_CONFIG.BACKUP_DIR, "app.log"),
+        maxsize: 10 * 1024 * 1024,
+        maxFiles: 10,
+        tailable: true,
+      }),
+      new winston.transports.File({
+        filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "error.log"),
+        level: "error",
+        maxsize: 10 * 1024 * 1024,
+        maxFiles: 5,
+        tailable: true,
+      }),
+      new winston.transports.File({
+        filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "audit.log"),
+        level: "info",
+        maxsize: 50 * 1024 * 1024,
+        maxFiles: 50,
+        tailable: true,
+        format: winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.json(),
+        ),
+      }),
+    ];
+
 export const logger = winston.createLogger({
   level: MS_ADMIN_AUDIT_CONFIG.LOG_LEVEL,
   format: hipaaFormat,
@@ -46,53 +83,24 @@ export const logger = winston.createLogger({
     version: "1.0.0",
     environment: MS_ADMIN_AUDIT_CONFIG.NODE_ENV,
   },
-  transports: [
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple(),
-      ),
-    }),
-
-    new winston.transports.File({
-      filename: path.join(MS_ADMIN_AUDIT_CONFIG.BACKUP_DIR, "app.log"),
-      maxsize: 10 * 1024 * 1024,
-      maxFiles: 10,
-      tailable: true,
-    }),
-
-    new winston.transports.File({
-      filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "error.log"),
-      level: "error",
-      maxsize: 10 * 1024 * 1024,
-      maxFiles: 5,
-      tailable: true,
-    }),
-
-    new winston.transports.File({
-      filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "audit.log"),
-      level: "info",
-      maxsize: 50 * 1024 * 1024,
-      maxFiles: 50,
-      tailable: true,
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json(),
-      ),
-    }),
-  ],
-
-  exceptionHandlers: [
-    new winston.transports.File({
-      filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "exceptions.log"),
-    }),
-  ],
-
-  rejectionHandlers: [
-    new winston.transports.File({
-      filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "rejections.log"),
-    }),
-  ],
+  transports: [baseConsoleTransport, ...fileTransports],
+  exceptionHandlers: MS_ADMIN_AUDIT_CONFIG.VERCEL
+    ? [baseConsoleTransport]
+    : [
+        new winston.transports.File({
+          filename: path.join(
+            MS_ADMIN_AUDIT_CONFIG.LOG_DIR,
+            "exceptions.log",
+          ),
+        }),
+      ],
+  rejectionHandlers: MS_ADMIN_AUDIT_CONFIG.VERCEL
+    ? [baseConsoleTransport]
+    : [
+        new winston.transports.File({
+          filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "rejections.log"),
+        }),
+      ],
 });
 
 export const auditLogger = winston.createLogger({
@@ -107,14 +115,19 @@ export const auditLogger = winston.createLogger({
     service: "ms-admin-audit",
     type: "audit",
   },
-  transports: [
-    new winston.transports.File({
-      filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "audit-trail.log"),
-      maxsize: 100 * 1024 * 1024,
-      maxFiles: 100,
-      tailable: true,
-    }),
-  ],
+  transports: MS_ADMIN_AUDIT_CONFIG.VERCEL
+    ? [baseConsoleTransport]
+    : [
+        new winston.transports.File({
+          filename: path.join(
+            MS_ADMIN_AUDIT_CONFIG.LOG_DIR,
+            "audit-trail.log",
+          ),
+          maxsize: 100 * 1024 * 1024,
+          maxFiles: 100,
+          tailable: true,
+        }),
+      ],
 });
 
 export const securityLogger = winston.createLogger({
@@ -129,26 +142,44 @@ export const securityLogger = winston.createLogger({
     service: "ms-admin-audit",
     type: "security",
   },
-  transports: [
-    new winston.transports.File({
-      filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "security.log"),
-      maxsize: 50 * 1024 * 1024,
-      maxFiles: 20,
-      tailable: true,
-    }),
-
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple(),
-      ),
-    }),
-  ],
+  transports: MS_ADMIN_AUDIT_CONFIG.VERCEL
+    ? [baseConsoleTransport]
+    : [
+        new winston.transports.File({
+          filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "security.log"),
+          maxsize: 50 * 1024 * 1024,
+          maxFiles: 20,
+          tailable: true,
+        }),
+        new winston.transports.Console({
+          format: winston.format.combine(
+            winston.format.colorize(),
+            winston.format.simple(),
+          ),
+        }),
+      ],
 });
 
-const logDir = path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR);
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
+if (!MS_ADMIN_AUDIT_CONFIG.VERCEL) {
+  const logDir = path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR);
+  try {
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true });
+    }
+  } catch (e) {
+    // Fallback to console if directory cannot be created
+    // This should not happen locally/containers, but keeps serverless safe
+    console.warn("Could not create log directory:", logDir, e);
+  }
+
+  const backupDir = path.join(MS_ADMIN_AUDIT_CONFIG.BACKUP_DIR);
+  try {
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
+  } catch (e) {
+    console.warn("Could not create backup directory:", backupDir, e);
+  }
 }
 
 export default {
