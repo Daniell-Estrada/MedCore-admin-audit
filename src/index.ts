@@ -101,3 +101,5 @@ process.on("SIGTERM", async () => {
 });
 
 startServer();
+
+export default app;
