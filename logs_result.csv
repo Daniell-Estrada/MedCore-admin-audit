@@ -1,210 +1,97 @@
 "TimeUTC","timestampInMs","requestPath","requestMethod","requestQueryString","responseStatusCode","requestId","requestUserAgent","level","environment","branch","vercelCache","type","function","host","deploymentDomain","deploymentId","durationMs","region","maxMemoryUsed","memorySize","message","projectId","traceId","sessionId","invocationId","instanceId","concurrency"
-"2025-10-18 20:47:41",1760820461594,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.ico","GET","",-1,"vxdwr-1760820460913-98bf3fd61769","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 OPR/122.0.0.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Handler error: Error: ENOENT: no such file or directory, mkdir 'backups'
-    at Object.mkdirSync (node:fs:1363:26)
-    at File._createLogDirIfNotExist (/var/task/node_modules/winston/lib/winston/transports/file.js:759:10)
-    at new File (/var/task/node_modules/winston/lib/winston/transports/file.js:94:28)
-    at Object.<anonymous> (/var/task/dist/utils/logger.js:37:9)
-    at Module.<anonymous> (/opt/rust/bytecode.js:2:1435)
-    at A.l._compile (/opt/rust/bytecode.js:2:3160)
-    at Object..js (node:internal/modules/cjs/loader:1820:10)
-    at Module.load (node:internal/modules/cjs/loader:1423:32)
-    at Function.<anonymous> (node:internal/modules/cjs/loader:1246:12)
-    at /opt/rust/nodejs.js:2:13528 {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'mkdir',
-  path: 'backups'
-}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7ZBRM62ZT8B287VWCSGA","",-1
-"2025-10-18 20:47:41",1760820461513,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.png","GET","",-1,"49jqb-1760820460867-dab925c29ef6","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Handler error: Error: ENOENT: no such file or directory, mkdir 'backups'
-    at Object.mkdirSync (node:fs:1363:26)
-    at File._createLogDirIfNotExist (/var/task/node_modules/winston/lib/winston/transports/file.js:759:10)
-    at new File (/var/task/node_modules/winston/lib/winston/transports/file.js:94:28)
-    at Object.<anonymous> (/var/task/dist/utils/logger.js:37:9)
-    at Module.<anonymous> (/opt/rust/bytecode.js:2:1435)
-    at A.l._compile (/opt/rust/bytecode.js:2:3160)
-    at Object..js (node:internal/modules/cjs/loader:1820:10)
-    at Module.load (node:internal/modules/cjs/loader:1423:32)
-    at Function.<anonymous> (node:internal/modules/cjs/loader:1246:12)
-    at /opt/rust/nodejs.js:2:13528 {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'mkdir',
-  path: 'backups'
-}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7ZBJX2JT2DBF2TCQ24MV","",-1
-"2025-10-18 20:47:40",1760820460920,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.ico","GET","",500,"vxdwr-1760820460913-98bf3fd61769","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 OPR/122.0.0.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",466,"iad1",107,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7ZBRM62ZT8B287VWCSGA","C5ymg5rize3o",1
-"2025-10-18 20:47:40",1760820460914,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.png","GET","",500,"49jqb-1760820460867-dab925c29ef6","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",459,"iad1",107,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7ZBJX2JT2DBF2TCQ24MV","TYYIdCayCBF8",1
-"2025-10-18 20:47:40",1760820460463,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/","GET","",-1,"bszsn-1760820460124-f7238b59ee66","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 OPR/122.0.0.0","error","production","main","","lambda","/","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Cannot find module '/var/task/dist/utils/logger'
+"2025-10-18 20:59:05",1760821145287,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.png","GET","",-1,"6kjkg-1760821145218-37adcab0f479","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",-1,"iad1",-1,-1,"Handler error: Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/uuid/dist-node/index.js from /var/task/dist/repositories/AuditRepository.js not supported.
+Instead change the require of index.js in /var/task/dist/repositories/AuditRepository.js to a dynamic import() which is available in all CommonJS modules.
+    at /opt/rust/nodejs.js:2:13528
+    at Function.Vr (/opt/rust/nodejs.js:2:13906)
+    at Ue.e.<computed>.Be._load (/opt/rust/nodejs.js:2:13498)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  code: 'ERR_REQUIRE_ESM'
+}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWVNB75DRYY6Q27QPPBMG","",-1
+"2025-10-18 20:59:05",1760821145259,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.png","GET","",500,"6kjkg-1760821145218-37adcab0f479","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",10,"iad1",117,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWVNB75DRYY6Q27QPPBMG","kfGKEoCcd5fx",1
+"2025-10-18 20:59:04",1760821144224,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.ico","GET","",-1,"mh9k7-1760821144172-8ce43fb77e34","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 OPR/122.0.0.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",-1,"iad1",-1,-1,"Handler error: Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/uuid/dist-node/index.js from /var/task/dist/repositories/AuditRepository.js not supported.
+Instead change the require of index.js in /var/task/dist/repositories/AuditRepository.js to a dynamic import() which is available in all CommonJS modules.
+    at /opt/rust/nodejs.js:2:13528
+    at Function.Vr (/opt/rust/nodejs.js:2:13906)
+    at Ue.e.<computed>.Be._load (/opt/rust/nodejs.js:2:13498)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  code: 'ERR_REQUIRE_ESM'
+}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWTM835Q36QBQNT0SF7AZ","",-1
+"2025-10-18 20:59:04",1760821144200,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.ico","GET","",500,"mh9k7-1760821144172-8ce43fb77e34","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 OPR/122.0.0.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",8,"iad1",117,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWTM835Q36QBQNT0SF7AZ","kfGKEoCcd5fx",1
+"2025-10-18 20:59:03",1760821143935,"cuidarte-admin-audit-c1bdu0aql.vercel.app/","GET","",-1,"vc7pt-1760821143488-5f41010ca3fd","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 OPR/122.0.0.0","error","production","main","","lambda","/","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",-1,"iad1",-1,-1,"Cannot find module '/var/task/dist/utils/logger'
 Require stack:
 - /var/task/src/index.js
 Did you forget to add it to ""dependencies"" in `package.json`?
-Node.js process exited with exit status: 1. The logs above can help with debugging the issue.","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7YK31N5WSFD4S51ZA3W1","",-1
-"2025-10-18 20:47:40",1760820460131,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/","GET","",500,"bszsn-1760820460124-f7238b59ee66","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 OPR/122.0.0.0","error","production","main","","lambda","/","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",317,"iad1",98,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7YK31N5WSFD4S51ZA3W1","",1
-"2025-10-18 20:47:38",1760820458730,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.png","GET","",-1,"qz5vj-1760820458669-7ba37b787d79","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Handler error: Error: ENOENT: no such file or directory, mkdir 'backups'
-    at Object.mkdirSync (node:fs:1363:26)
-    at File._createLogDirIfNotExist (/var/task/node_modules/winston/lib/winston/transports/file.js:759:10)
-    at new File (/var/task/node_modules/winston/lib/winston/transports/file.js:94:28)
-    at Object.<anonymous> (/var/task/dist/utils/logger.js:37:9)
-    at Module.<anonymous> (/opt/rust/bytecode.js:2:1435)
-    at A.l._compile (/opt/rust/bytecode.js:2:3160)
-    at Object..js (node:internal/modules/cjs/loader:1820:10)
-    at Module.load (node:internal/modules/cjs/loader:1423:32)
-    at Function.<anonymous> (node:internal/modules/cjs/loader:1246:12)
-    at /opt/rust/nodejs.js:2:13528 {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'mkdir',
-  path: 'backups'
-}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7X6NG8Q3YR65E1730CXC","",-1
-"2025-10-18 20:47:38",1760820458709,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.png","GET","",500,"qz5vj-1760820458669-7ba37b787d79","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",7,"iad1",113,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7X6NG8Q3YR65E1730CXC","48lzNtexvdnh",1
-"2025-10-18 20:47:37",1760820457569,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.png","GET","",-1,"km9cl-1760820457511-a272da511af7","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Handler error: Error: ENOENT: no such file or directory, mkdir 'backups'
-    at Object.mkdirSync (node:fs:1363:26)
-    at File._createLogDirIfNotExist (/var/task/node_modules/winston/lib/winston/transports/file.js:759:10)
-    at new File (/var/task/node_modules/winston/lib/winston/transports/file.js:94:28)
-    at Object.<anonymous> (/var/task/dist/utils/logger.js:37:9)
-    at Module.<anonymous> (/opt/rust/bytecode.js:2:1435)
-    at A.l._compile (/opt/rust/bytecode.js:2:3160)
-    at Object..js (node:internal/modules/cjs/loader:1820:10)
-    at Module.load (node:internal/modules/cjs/loader:1423:32)
-    at Function.<anonymous> (node:internal/modules/cjs/loader:1246:12)
-    at /opt/rust/nodejs.js:2:13528 {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'mkdir',
-  path: 'backups'
-}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7W2GXHTBQRGF8PAPDEXS","",-1
-"2025-10-18 20:47:37",1760820457552,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.png","GET","",500,"km9cl-1760820457511-a272da511af7","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",6,"iad1",113,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7W2GXHTBQRGF8PAPDEXS","48lzNtexvdnh",1
-"2025-10-18 20:47:37",1760820457472,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.ico","GET","",-1,"km9cl-1760820457405-677a0f5301bc","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Handler error: Error: ENOENT: no such file or directory, mkdir 'backups'
-    at Object.mkdirSync (node:fs:1363:26)
-    at File._createLogDirIfNotExist (/var/task/node_modules/winston/lib/winston/transports/file.js:759:10)
-    at new File (/var/task/node_modules/winston/lib/winston/transports/file.js:94:28)
-    at Object.<anonymous> (/var/task/dist/utils/logger.js:37:9)
-    at Module.<anonymous> (/opt/rust/bytecode.js:2:1435)
-    at A.l._compile (/opt/rust/bytecode.js:2:3160)
-    at Object..js (node:internal/modules/cjs/loader:1820:10)
-    at Module.load (node:internal/modules/cjs/loader:1423:32)
-    at Function.<anonymous> (node:internal/modules/cjs/loader:1246:12)
-    at /opt/rust/nodejs.js:2:13528 {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'mkdir',
-  path: 'backups'
-}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7VZDZ25NXCMCZ8W2C4V3","",-1
-"2025-10-18 20:47:37",1760820457453,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.ico","GET","",500,"km9cl-1760820457405-677a0f5301bc","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",7,"iad1",113,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7VZDZ25NXCMCZ8W2C4V3","48lzNtexvdnh",1
-"2025-10-18 20:47:35",1760820455300,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.ico","GET","",-1,"n5jfv-1760820455240-c3910b9059cd","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Handler error: Error: ENOENT: no such file or directory, mkdir 'backups'
-    at Object.mkdirSync (node:fs:1363:26)
-    at File._createLogDirIfNotExist (/var/task/node_modules/winston/lib/winston/transports/file.js:759:10)
-    at new File (/var/task/node_modules/winston/lib/winston/transports/file.js:94:28)
-    at Object.<anonymous> (/var/task/dist/utils/logger.js:37:9)
-    at Module.<anonymous> (/opt/rust/bytecode.js:2:1435)
-    at A.l._compile (/opt/rust/bytecode.js:2:3160)
-    at Object..js (node:internal/modules/cjs/loader:1820:10)
-    at Module.load (node:internal/modules/cjs/loader:1423:32)
-    at Function.<anonymous> (node:internal/modules/cjs/loader:1246:12)
-    at /opt/rust/nodejs.js:2:13528 {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'mkdir',
-  path: 'backups'
-}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7SVF6W32Q96P1Q0VJ68F","",-1
-"2025-10-18 20:47:35",1760820455279,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.ico","GET","",500,"n5jfv-1760820455240-c3910b9059cd","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",7,"iad1",113,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7SVF6W32Q96P1Q0VJ68F","48lzNtexvdnh",1
-"2025-10-18 20:47:34",1760820454584,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.ico","GET","",-1,"6j9ml-1760820454507-3f3c14769b80","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 OPR/122.0.0.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Handler error: Error: ENOENT: no such file or directory, mkdir 'backups'
-    at Object.mkdirSync (node:fs:1363:26)
-    at File._createLogDirIfNotExist (/var/task/node_modules/winston/lib/winston/transports/file.js:759:10)
-    at new File (/var/task/node_modules/winston/lib/winston/transports/file.js:94:28)
-    at Object.<anonymous> (/var/task/dist/utils/logger.js:37:9)
-    at Module.<anonymous> (/opt/rust/bytecode.js:2:1435)
-    at A.l._compile (/opt/rust/bytecode.js:2:3160)
-    at Object..js (node:internal/modules/cjs/loader:1820:10)
-    at Module.load (node:internal/modules/cjs/loader:1423:32)
-    at Function.<anonymous> (node:internal/modules/cjs/loader:1246:12)
-    at /opt/rust/nodejs.js:2:13528 {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'mkdir',
-  path: 'backups'
-}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7S4YVPN1QJ65VQC99HDV","",-1
-"2025-10-18 20:47:34",1760820454558,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.ico","GET","",500,"6j9ml-1760820454507-3f3c14769b80","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 OPR/122.0.0.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",7,"iad1",113,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7S4YVPN1QJ65VQC99HDV","48lzNtexvdnh",1
-"2025-10-18 20:47:34",1760820454283,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/","GET","",-1,"zbrn9-1760820453919-145be183798d","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 OPR/122.0.0.0","error","production","main","","lambda","/","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Cannot find module '/var/task/dist/utils/logger'
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWT0KKVJ3EZHCZQS866C1","",-1
+"2025-10-18 20:59:03",1760821143571,"cuidarte-admin-audit-c1bdu0aql.vercel.app/","GET","",500,"vc7pt-1760821143488-5f41010ca3fd","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 OPR/122.0.0.0","error","production","main","","lambda","/","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",347,"iad1",97,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWT0KKVJ3EZHCZQS866C1","",1
+"2025-10-18 20:59:03",1760821143170,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.png","GET","",-1,"n5jfv-1760821143115-940674128e40","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",-1,"iad1",-1,-1,"Handler error: Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/uuid/dist-node/index.js from /var/task/dist/repositories/AuditRepository.js not supported.
+Instead change the require of index.js in /var/task/dist/repositories/AuditRepository.js to a dynamic import() which is available in all CommonJS modules.
+    at /opt/rust/nodejs.js:2:13528
+    at Function.Vr (/opt/rust/nodejs.js:2:13906)
+    at Ue.e.<computed>.Be._load (/opt/rust/nodejs.js:2:13498)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  code: 'ERR_REQUIRE_ESM'
+}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWSKKF4X3DCQ7THN3VR8J","",-1
+"2025-10-18 20:59:03",1760821143155,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.png","GET","",500,"n5jfv-1760821143115-940674128e40","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",7,"iad1",117,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWSKKF4X3DCQ7THN3VR8J","kfGKEoCcd5fx",1
+"2025-10-18 20:59:02",1760821142053,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.png","GET","",-1,"n5vbr-1760821141999-14f1cf707551","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",-1,"iad1",-1,-1,"Handler error: Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/uuid/dist-node/index.js from /var/task/dist/repositories/AuditRepository.js not supported.
+Instead change the require of index.js in /var/task/dist/repositories/AuditRepository.js to a dynamic import() which is available in all CommonJS modules.
+    at /opt/rust/nodejs.js:2:13528
+    at Function.Vr (/opt/rust/nodejs.js:2:13906)
+    at Ue.e.<computed>.Be._load (/opt/rust/nodejs.js:2:13498)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  code: 'ERR_REQUIRE_ESM'
+}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWRGQ0V4RTJJR4BVZS90B","",-1
+"2025-10-18 20:59:02",1760821142038,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.png","GET","",500,"n5vbr-1760821141999-14f1cf707551","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",6,"iad1",117,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWRGQ0V4RTJJR4BVZS90B","kfGKEoCcd5fx",1
+"2025-10-18 20:59:01",1760821141959,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.ico","GET","",-1,"4xv89-1760821141892-de4cd83e9ebb","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",-1,"iad1",-1,-1,"Handler error: Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/uuid/dist-node/index.js from /var/task/dist/repositories/AuditRepository.js not supported.
+Instead change the require of index.js in /var/task/dist/repositories/AuditRepository.js to a dynamic import() which is available in all CommonJS modules.
+    at /opt/rust/nodejs.js:2:13528
+    at Function.Vr (/opt/rust/nodejs.js:2:13906)
+    at Ue.e.<computed>.Be._load (/opt/rust/nodejs.js:2:13498)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  code: 'ERR_REQUIRE_ESM'
+}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWRDMV4NWJ8C1EB56D4KF","",-1
+"2025-10-18 20:59:01",1760821141940,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.ico","GET","",500,"4xv89-1760821141892-de4cd83e9ebb","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",10,"iad1",117,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWRDMV4NWJ8C1EB56D4KF","kfGKEoCcd5fx",1
+"2025-10-18 20:58:59",1760821139845,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.ico","GET","",-1,"n5vbr-1760821139781-ba9b3b57b03a","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",-1,"iad1",-1,-1,"Handler error: Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/uuid/dist-node/index.js from /var/task/dist/repositories/AuditRepository.js not supported.
+Instead change the require of index.js in /var/task/dist/repositories/AuditRepository.js to a dynamic import() which is available in all CommonJS modules.
+    at /opt/rust/nodejs.js:2:13528
+    at Function.Vr (/opt/rust/nodejs.js:2:13906)
+    at Ue.e.<computed>.Be._load (/opt/rust/nodejs.js:2:13498)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  code: 'ERR_REQUIRE_ESM'
+}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWPBFAW336Q3F97K5CFPY","",-1
+"2025-10-18 20:58:59",1760821139823,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.ico","GET","",500,"n5vbr-1760821139781-ba9b3b57b03a","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",7,"iad1",117,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWPBFAW336Q3F97K5CFPY","kfGKEoCcd5fx",1
+"2025-10-18 20:58:58",1760821138700,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.ico","GET","",-1,"n5jfv-1760821138538-6586fe96de00","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",-1,"iad1",-1,-1,"Handler error: Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/uuid/dist-node/index.js from /var/task/dist/repositories/AuditRepository.js not supported.
+Instead change the require of index.js in /var/task/dist/repositories/AuditRepository.js to a dynamic import() which is available in all CommonJS modules.
+    at /opt/rust/nodejs.js:2:13528
+    at Function.Vr (/opt/rust/nodejs.js:2:13906)
+    at Ue.e.<computed>.Be._load (/opt/rust/nodejs.js:2:13498)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  code: 'ERR_REQUIRE_ESM'
+}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWN7TWZSMD62A8NR8RWB6","",-1
+"2025-10-18 20:58:58",1760821138682,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.ico","GET","",500,"n5jfv-1760821138538-6586fe96de00","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",7,"iad1",117,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWN7TWZSMD62A8NR8RWB6","kfGKEoCcd5fx",1
+"2025-10-18 20:58:58",1760821138417,"cuidarte-admin-audit-c1bdu0aql.vercel.app/","GET","",-1,"db4mg-1760821138026-4358e89178c6","vercel-favicon/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",-1,"iad1",-1,-1,"Cannot find module '/var/task/dist/utils/logger'
 Require stack:
 - /var/task/src/index.js
 Did you forget to add it to ""dependencies"" in `package.json`?
-Node.js process exited with exit status: 1. The logs above can help with debugging the issue.","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7RHR7JZJ8PYV8F7M6HWQ","",-1
-"2025-10-18 20:47:34",1760820454137,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.ico","GET","",-1,"4xv89-1760820453975-af952bfdca80","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Handler error: Error: ENOENT: no such file or directory, mkdir 'backups'
-    at Object.mkdirSync (node:fs:1363:26)
-    at File._createLogDirIfNotExist (/var/task/node_modules/winston/lib/winston/transports/file.js:759:10)
-    at new File (/var/task/node_modules/winston/lib/winston/transports/file.js:94:28)
-    at Object.<anonymous> (/var/task/dist/utils/logger.js:37:9)
-    at Module.<anonymous> (/opt/rust/bytecode.js:2:1435)
-    at A.l._compile (/opt/rust/bytecode.js:2:3160)
-    at Object..js (node:internal/modules/cjs/loader:1820:10)
-    at Module.load (node:internal/modules/cjs/loader:1423:32)
-    at Function.<anonymous> (node:internal/modules/cjs/loader:1246:12)
-    at /opt/rust/nodejs.js:2:13528 {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'mkdir',
-  path: 'backups'
-}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7RQ4GC2G2AE30FPEHHKT","",-1
-"2025-10-18 20:47:34",1760820454116,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.ico","GET","",500,"4xv89-1760820453975-af952bfdca80","vercel-favicon/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",7,"iad1",113,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7RQ4GC2G2AE30FPEHHKT","48lzNtexvdnh",1
-"2025-10-18 20:47:33",1760820453944,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/","GET","",500,"zbrn9-1760820453919-145be183798d","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 OPR/122.0.0.0","error","production","main","","lambda","/","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",318,"iad1",98,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7RHR7JZJ8PYV8F7M6HWQ","",1
-"2025-10-18 20:47:33",1760820453844,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/","GET","",-1,"2sspk-1760820453461-566055228d85","vercel-favicon/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Cannot find module '/var/task/dist/utils/logger'
-Require stack:
-- /var/task/src/index.js
-Did you forget to add it to ""dependencies"" in `package.json`?
-Node.js process exited with exit status: 1. The logs above can help with debugging the issue.","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7R4074KSZ153QD6T6SCM","",-1
-"2025-10-18 20:47:33",1760820453504,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/","GET","",500,"2sspk-1760820453461-566055228d85","vercel-favicon/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",323,"iad1",98,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7R4074KSZ153QD6T6SCM","",1
-"2025-10-18 20:47:32",1760820452342,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/","GET","",-1,"b2l8z-1760820451958-162a6f174f66","vercel-favicon/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Cannot find module '/var/task/dist/utils/logger'
-Require stack:
-- /var/task/src/index.js
-Did you forget to add it to ""dependencies"" in `package.json`?
-Node.js process exited with exit status: 1. The logs above can help with debugging the issue.","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7PMYCWD0R0K55K0RBXP2","",-1
-"2025-10-18 20:47:31",1760820451998,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/","GET","",500,"b2l8z-1760820451958-162a6f174f66","vercel-favicon/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",321,"iad1",98,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7PMYCWD0R0K55K0RBXP2","",1
-"2025-10-18 20:47:31",1760820451911,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.ico","GET","",-1,"crlpn-1760820451795-feffa1f7a11a","vercel-screenshot/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Handler error: Error: ENOENT: no such file or directory, mkdir 'backups'
-    at Object.mkdirSync (node:fs:1363:26)
-    at File._createLogDirIfNotExist (/var/task/node_modules/winston/lib/winston/transports/file.js:759:10)
-    at new File (/var/task/node_modules/winston/lib/winston/transports/file.js:94:28)
-    at Object.<anonymous> (/var/task/dist/utils/logger.js:37:9)
-    at Module.<anonymous> (/opt/rust/bytecode.js:2:1435)
-    at A.l._compile (/opt/rust/bytecode.js:2:3160)
-    at Object..js (node:internal/modules/cjs/loader:1820:10)
-    at Module.load (node:internal/modules/cjs/loader:1423:32)
-    at Function.<anonymous> (node:internal/modules/cjs/loader:1246:12)
-    at /opt/rust/nodejs.js:2:13528 {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'mkdir',
-  path: 'backups'
-}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7PFV6CWZWR739ZW8J6B4","",-1
-"2025-10-18 20:47:31",1760820451835,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.ico","GET","",500,"crlpn-1760820451795-feffa1f7a11a","vercel-screenshot/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",7,"iad1",113,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7PFV6CWZWR739ZW8J6B4","48lzNtexvdnh",1
-"2025-10-18 20:47:31",1760820451811,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.ico","GET","",-1,"t9ptp-1760820451214-851a819b0175","vercel-screenshot/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Handler error: Error: ENOENT: no such file or directory, mkdir 'backups'
-    at Object.mkdirSync (node:fs:1363:26)
-    at File._createLogDirIfNotExist (/var/task/node_modules/winston/lib/winston/transports/file.js:759:10)
-    at new File (/var/task/node_modules/winston/lib/winston/transports/file.js:94:28)
-    at Object.<anonymous> (/var/task/dist/utils/logger.js:37:9)
-    at Module.<anonymous> (/opt/rust/bytecode.js:2:1435)
-    at A.l._compile (/opt/rust/bytecode.js:2:3160)
-    at Object..js (node:internal/modules/cjs/loader:1820:10)
-    at Module.load (node:internal/modules/cjs/loader:1423:32)
-    at Function.<anonymous> (node:internal/modules/cjs/loader:1246:12)
-    at /opt/rust/nodejs.js:2:13528 {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'mkdir',
-  path: 'backups'
-}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7P4NY9G8QC0F3HN9BE06","",-1
-"2025-10-18 20:47:31",1760820451717,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/","GET","",-1,"xfzgc-1760820451226-ca108d0c85b3","vercel-screenshot/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Cannot find module '/var/task/dist/utils/logger'
-Require stack:
-- /var/task/src/index.js
-Did you forget to add it to ""dependencies"" in `package.json`?
-Node.js process exited with exit status: 1. The logs above can help with debugging the issue.","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7P1D2HEDZXYXNV5RFK4E","",-1
-"2025-10-18 20:47:31",1760820451477,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/favicon.ico","GET","",500,"t9ptp-1760820451214-851a819b0175","vercel-screenshot/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",408,"iad1",113,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7P4NY9G8QC0F3HN9BE06","48lzNtexvdnh",1
-"2025-10-18 20:47:31",1760820451373,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/","GET","",500,"xfzgc-1760820451226-ca108d0c85b3","vercel-screenshot/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",321,"iad1",97,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7P1D2HEDZXYXNV5RFK4E","",1
-"2025-10-18 20:47:31",1760820451148,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/","GET","",-1,"4qkjn-1760820450640-00ea2266ca33","vercel-screenshot/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Cannot find module '/var/task/dist/utils/logger'
-Require stack:
-- /var/task/src/index.js
-Did you forget to add it to ""dependencies"" in `package.json`?
-Node.js process exited with exit status: 1. The logs above can help with debugging the issue.","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7NF420CQWE50REDKVH3W","",-1
-"2025-10-18 20:47:31",1760820451109,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/","GET","",-1,"jtf4q-1760820449761-09c8dcd244d8","vercel-screenshot/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Cannot find module '/var/task/dist/utils/logger'
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWMMHDB65CQC2GAQEPMQG","",-1
+"2025-10-18 20:58:58",1760821138065,"cuidarte-admin-audit-c1bdu0aql.vercel.app/","GET","",500,"db4mg-1760821138026-4358e89178c6","vercel-favicon/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",336,"iad1",97,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWMMHDB65CQC2GAQEPMQG","",1
+"2025-10-18 20:58:58",1760821138034,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.ico","GET","",-1,"rqmj8-1760821137933-930456f6dff8","vercel-screenshot/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",-1,"iad1",-1,-1,"Handler error: Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/uuid/dist-node/index.js from /var/task/dist/repositories/AuditRepository.js not supported.
+Instead change the require of index.js in /var/task/dist/repositories/AuditRepository.js to a dynamic import() which is available in all CommonJS modules.
+    at /opt/rust/nodejs.js:2:13528
+    at Function.Vr (/opt/rust/nodejs.js:2:13906)
+    at Ue.e.<computed>.Be._load (/opt/rust/nodejs.js:2:13498)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  code: 'ERR_REQUIRE_ESM'
+}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWMHRHRVVCG8ZR9JS87XB","",-1
+"2025-10-18 20:58:57",1760821137976,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.ico","GET","",500,"rqmj8-1760821137933-930456f6dff8","vercel-screenshot/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",9,"iad1",117,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWMHRHRVVCG8ZR9JS87XB","kfGKEoCcd5fx",1
+"2025-10-18 20:58:57",1760821137937,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.ico","GET","",-1,"2mw8k-1760821137354-300be5cb3f05","vercel-screenshot/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",-1,"iad1",-1,-1,"Handler error: Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/uuid/dist-node/index.js from /var/task/dist/repositories/AuditRepository.js not supported.
+Instead change the require of index.js in /var/task/dist/repositories/AuditRepository.js to a dynamic import() which is available in all CommonJS modules.
+    at /opt/rust/nodejs.js:2:13528
+    at Function.Vr (/opt/rust/nodejs.js:2:13906)
+    at Ue.e.<computed>.Be._load (/opt/rust/nodejs.js:2:13498)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  code: 'ERR_REQUIRE_ESM'
+}","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWM5PWEG3QDXEJHTP4DXT","",-1
+"2025-10-18 20:58:57",1760821137728,"cuidarte-admin-audit-c1bdu0aql.vercel.app/","GET","",-1,"8dmcg-1760821136674-d4d3ae939038","vercel-screenshot/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",-1,"iad1",-1,-1,"Cannot find module '/var/task/dist/utils/logger'
 Require stack:
 - /var/task/src/index.js
 Did you forget to add it to ""dependencies"" in `package.json`?
@@ -213,12 +100,35 @@ Cannot find module '/var/task/dist/utils/logger'
 Require stack:
 - /var/task/src/index.js
 Did you forget to add it to ""dependencies"" in `package.json`?
-Node.js process exited with exit status: 1. The logs above can help with debugging the issue.","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7MW6NQ098MAYKB6DPKDY","",-1
-"2025-10-18 20:47:30",1760820450788,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/","GET","",500,"4qkjn-1760820450640-00ea2266ca33","vercel-screenshot/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",334,"iad1",97,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7NF420CQWE50REDKVH3W","",1
-"2025-10-18 20:47:30",1760820450521,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/","GET","",-1,"kbhzp-1760820449714-8d92dbaca69e","vercel-screenshot/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",-1,"iad1",-1,-1,"Cannot find module '/var/task/dist/utils/logger'
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWKDA375NTY6A0P8EQMMP","",-1
+"2025-10-18 20:58:57",1760821137590,"cuidarte-admin-audit-c1bdu0aql.vercel.app/favicon.ico","GET","",500,"2mw8k-1760821137354-300be5cb3f05","vercel-screenshot/1.0","error","production","main","","lambda","/api","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",413,"iad1",117,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWM5PWEG3QDXEJHTP4DXT","kfGKEoCcd5fx",1
+"2025-10-18 20:58:57",1760821137284,"cuidarte-admin-audit-c1bdu0aql.vercel.app/","GET","",-1,"clpj4-1760821136232-3c09ce4ce87a","vercel-screenshot/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",-1,"iad1",-1,-1,"Cannot find module '/var/task/dist/utils/logger'
 Require stack:
 - /var/task/src/index.js
 Did you forget to add it to ""dependencies"" in `package.json`?
-Node.js process exited with exit status: 1. The logs above can help with debugging the issue.","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7MW7KRP0KT9NXEX2XEDG","",-1
-"2025-10-18 20:47:30",1760820450183,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/","GET","",500,"kbhzp-1760820449714-8d92dbaca69e","vercel-screenshot/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",321,"iad1",98,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7MW7KRP0KT9NXEX2XEDG","",1
-"2025-10-18 20:47:30",1760820450182,"cuidarte-admin-audit-2ytkyzxo6.vercel.app/","GET","",500,"jtf4q-1760820449761-09c8dcd244d8","vercel-screenshot/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-2ytkyzxo6.vercel.app","cuidarte-admin-audit-2ytkyzxo6.vercel.app","dpl_3hUb4GMXfEZCCnja4mvWtMueXd1H",329,"iad1",98,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WH7MW6NQ098MAYKB6DPKDY","",1
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Cannot find module '/var/task/dist/utils/logger'
+Require stack:
+- /var/task/src/index.js
+Did you forget to add it to ""dependencies"" in `package.json`?
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWJZH7XR2V64V7Y6F2VPG","",-1
+"2025-10-18 20:58:56",1760821136974,"cuidarte-admin-audit-c1bdu0aql.vercel.app/","GET","",-1,"2mw8k-1760821136562-7480186cdc88","vercel-favicon/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",-1,"iad1",-1,-1,"Cannot find module '/var/task/dist/utils/logger'
+Require stack:
+- /var/task/src/index.js
+Did you forget to add it to ""dependencies"" in `package.json`?
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWK6WP20EYRH6933ZNG6G","",-1
+"2025-10-18 20:58:56",1760821136809,"cuidarte-admin-audit-c1bdu0aql.vercel.app/","GET","",500,"8dmcg-1760821136674-d4d3ae939038","vercel-screenshot/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",336,"iad1",98,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWKDA375NTY6A0P8EQMMP","",1
+"2025-10-18 20:58:56",1760821136604,"cuidarte-admin-audit-c1bdu0aql.vercel.app/","GET","",500,"2mw8k-1760821136562-7480186cdc88","vercel-favicon/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",342,"iad1",97,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWK6WP20EYRH6933ZNG6G","",1
+"2025-10-18 20:58:56",1760821136510,"cuidarte-admin-audit-c1bdu0aql.vercel.app/","GET","",-1,"p24jc-1760821135304-0cc569b0de16","vercel-screenshot/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",-1,"iad1",-1,-1,"Cannot find module '/var/task/dist/utils/logger'
+Require stack:
+- /var/task/src/index.js
+Did you forget to add it to ""dependencies"" in `package.json`?
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWJRM9ER73E9EMNTAJD48","",-1
+"2025-10-18 20:58:56",1760821136369,"cuidarte-admin-audit-c1bdu0aql.vercel.app/","GET","",500,"clpj4-1760821136232-3c09ce4ce87a","vercel-screenshot/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",328,"iad1",98,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWJZH7XR2V64V7Y6F2VPG","",1
+"2025-10-18 20:58:56",1760821136148,"cuidarte-admin-audit-c1bdu0aql.vercel.app/","GET","",500,"p24jc-1760821135304-0cc569b0de16","vercel-screenshot/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",336,"iad1",98,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWJRM9ER73E9EMNTAJD48","",1
+"2025-10-18 20:58:55",1760821135955,"cuidarte-admin-audit-c1bdu0aql.vercel.app/","GET","",-1,"l5n98-1760821135328-2bf02b2b3bee","vercel-screenshot/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",-1,"iad1",-1,-1,"Cannot find module '/var/task/dist/utils/logger'
+Require stack:
+- /var/task/src/index.js
+Did you forget to add it to ""dependencies"" in `package.json`?
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWJ6S52JK40M3J67HR14F","",-1
+"2025-10-18 20:58:55",1760821135577,"cuidarte-admin-audit-c1bdu0aql.vercel.app/","GET","",500,"l5n98-1760821135328-2bf02b2b3bee","vercel-screenshot/1.0","error","production","main","","lambda","/","cuidarte-admin-audit-c1bdu0aql.vercel.app","cuidarte-admin-audit-c1bdu0aql.vercel.app","dpl_GEYufRK5vXUsCTpcZpAQ1JrNhBT5",356,"iad1",98,2048,"","prj_3GTZIC1Uj56fJIRe5itAtAIyuMgY","","","01K7WHWJ6S52JK40M3J67HR14F","",1

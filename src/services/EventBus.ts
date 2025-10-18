@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 import type { Producer, Consumer, EachMessagePayload } from "kafkajs";
 import { logger, auditLogger, securityLogger } from "@/utils/logger";
 import { AuditRepository } from "@/repositories/AuditRepository";
@@ -309,7 +309,7 @@ export class EventBus extends EventEmitter {
           updatedAt: new Date(),
         },
         create: {
-          id: uuidv4(),
+          id: randomUUID(),
           eventId: eventData.eventId,
           eventType: eventData.eventType,
           source,

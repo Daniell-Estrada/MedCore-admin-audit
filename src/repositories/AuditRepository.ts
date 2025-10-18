@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 import {
   AuditLog,
   AuditLogSchema,
@@ -59,7 +59,7 @@ export class AuditRepository {
       const validatedInput = AuditLogSchema.parse(input);
 
       const auditLogData = {
-        id: uuidv4(),
+        id: randomUUID(),
         ...validatedInput,
         createdAt: new Date(),
       };
@@ -245,7 +245,7 @@ export class AuditRepository {
 
       await this.prisma.systemAlert.create({
         data: {
-          id: uuidv4(),
+          id: randomUUID(),
           type: auditLog.isSecurityEvent() ? "SECURITY" : "ERROR",
           severity: "CRITICAL",
           title: `Critical event: ${auditLog.eventType}`,
