@@ -65,22 +65,6 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use(requestLogger);
 
-// Simple status routes for serverless entry points and assets
-app.get(["/", "/api"], (_req, res) => {
-  res.status(200).json({
-    status: "ok",
-    service: "ms-admin-audit",
-    message: "Service is up. See /api/v1/health for detailed health.",
-    health: "/api/v1/health",
-    timestamp: new Date().toISOString(),
-  });
-});
-
-app.get("/favicon.ico", (_req, res) => {
-  // Avoid noise and 404s on serverless for favicon requests
-  res.status(204).end();
-});
-
 app.use("/api/v1", routes);
 
 app.use(errorHandler);
