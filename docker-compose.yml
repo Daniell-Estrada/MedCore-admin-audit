@@ -7,6 +7,8 @@ services:
       target: production
     ports:
       - "3005:3005"
+    expose:
+      - "3005"
     volumes:
       - audit_backups:/app/backups
       - audit_logs:/app/logs
@@ -15,7 +17,9 @@ services:
     env_file:
       - .env
     networks:
-      - medcore-network
+      medcore-network:
+        aliases:
+          - ms-admin-audit
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3005/api/v1/health"]
@@ -32,5 +36,4 @@ volumes:
 
 networks:
   medcore-network:
-    driver: bridge
     external: true

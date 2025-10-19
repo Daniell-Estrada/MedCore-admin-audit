@@ -21,6 +21,8 @@ export interface MedCoreAuditEvent {
   source: string;
   timestamp: Date;
   userId?: string | undefined;
+  patientId?: string | undefined;
+  userRole?: string | undefined;
   sessionId?: string | undefined;
   severityLevel: string;
   data: Record<string, any>;
@@ -540,7 +542,7 @@ export class EventBus extends EventEmitter {
         severityLevel: event.severityLevel as any,
         action: mapEventTypeToAction(mappedEventType),
         userId: event.userId,
-        userRole: event.data.role,
+        userRole: event.userRole,
         resourceType: AUDIT_CONSTANTS.RESOURCE_TYPES.USER_ACCOUNT,
         resourceId: event.userId,
         description: `Security event: ${event.eventType}`,
@@ -607,8 +609,8 @@ export class EventBus extends EventEmitter {
         severityLevel: event.severityLevel as any,
         action: mapEventTypeToAction(event.eventType),
         userId: event.userId,
-        userRole: event.data.userRole,
-        patientId: event.data.patientId,
+        userRole: event.userRole,
+        patientId: event.patientId,
         resourceType: mapEventTypeToResourceType(event.eventType),
         resourceId: event.data.resourceId,
         description: `Clinical event: ${event.eventType}`,
@@ -637,7 +639,7 @@ export class EventBus extends EventEmitter {
         severityLevel: event.severityLevel as any,
         action: mapEventTypeToAction(event.eventType),
         userId: event.userId,
-        userRole: event.data.userRole,
+        userRole: event.userRole,
         resourceType: mapEventTypeToResourceType(event.eventType),
         resourceId: event.data.resourceId,
         description: `Inventory/Billing event: ${event.eventType}`,

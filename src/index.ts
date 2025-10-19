@@ -1,4 +1,4 @@
-import "module-alias/register";
+// import "module-alias/register";
 import cors from "cors";
 import express from "express";
 import compression from "compression";

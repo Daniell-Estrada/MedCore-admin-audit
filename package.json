@@ -19,8 +19,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
-    "docker:build": "docker build -t ms-admin-audit .",
-    "docker:run": "docker run -p 3005:3005 ms-admin-audit"
+    "docker:build": "docker compose build",
+    "docker:run": "docker compose up -d --remove-orphans"
   },
   "repository": {
     "type": "git",

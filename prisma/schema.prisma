@@ -83,13 +83,13 @@ enum EventType {
 }
 
 enum UserRole {
-  ADMIN
-  DOCTOR
-  NURSE
-  PATIENT
-  SYSTEM
-  PHARMACIST
-  TECHNICIAN
+  ADMINISTRADOR
+  MEDICO
+  ENFERMERA
+  PACIENTE
+  SISTEMA
+  FARMACEUTICO
+  TECNICO
 }
 
 enum SeverityLevel {
