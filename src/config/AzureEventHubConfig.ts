@@ -115,12 +115,12 @@ export class AzureEventHubConfig {
     const producer = kafka.producer({
       maxInFlightRequests: 5,
       idempotent: false,
-      transactionTimeout: 60000,
+      transactionTimeout: 6000,
       createPartitioner: Partitioners.DefaultPartitioner,
       retry: {
         initialRetryTime: 1000,
         retries: 5,
-        maxRetryTime: 60000,
+        maxRetryTime: 6000,
       },
       allowAutoTopicCreation: false,
     });
@@ -138,18 +138,18 @@ export class AzureEventHubConfig {
 
     const consumer = kafka.consumer({
       groupId: consumerGroup,
-      sessionTimeout: 150000,
-      heartbeatInterval: 30000,
+      sessionTimeout: 15000,
+      heartbeatInterval: 3000,
       maxWaitTimeInMs: AZURE_EVENT_HUB_CONFIG.MAX_WAIT_TIME_MS,
-      rebalanceTimeout: 180000,
+      rebalanceTimeout: 18000,
       retry: {
-        initialRetryTime: 1000,
+        initialRetryTime: 100,
         retries: 5,
-        maxRetryTime: 60000,
+        maxRetryTime: 6000,
       },
       allowAutoTopicCreation: false,
       readUncommitted: false,
-      metadataMaxAge: 300000,
+      metadataMaxAge: 3000,
     });
 
     await consumer.connect();
@@ -231,7 +231,10 @@ export class AzureEventHubConfig {
           } catch (e: any) {
             const msg = e?.message || String(e);
             if (!this.shuttingDown || !msg.includes("ECONNRESET")) {
-              logger.warn("Producer disconnect warning", { eventHubName, error: e });
+              logger.warn("Producer disconnect warning", {
+                eventHubName,
+                error: e,
+              });
             }
           }
         })(),
@@ -245,7 +248,10 @@ export class AzureEventHubConfig {
             } catch (e: any) {
               const msg = e?.message || String(e);
               if (!this.shuttingDown || !msg.includes("ECONNRESET")) {
-                logger.warn("Consumer disconnect warning", { eventHubName, error: e });
+                logger.warn("Consumer disconnect warning", {
+                  eventHubName,
+                  error: e,
+                });
               }
             }
           })(),

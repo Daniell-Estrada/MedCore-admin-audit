@@ -7,35 +7,14 @@ import { AUDIT_CONSTANTS } from "@/constants/auditConstants";
 import { AzureEventHubConfig } from "@/config/AzureEventHubConfig";
 import { DatabaseConfig } from "@/config/database";
 import {
-  getEventValidationErrors,
-  validateEvent,
-} from "@/utils/eventValidation";
-import {
   mapEventTypeToAction,
   mapEventTypeToResourceType,
 } from "@/utils/mappings";
-
-export interface MedCoreAuditEvent {
-  eventId: string;
-  eventType: string;
-  source: string;
-  timestamp: Date;
-  userId?: string | undefined;
-  patientId?: string | undefined;
-  userRole?: string | undefined;
-  sessionId?: string | undefined;
-  severityLevel: string;
-  data: Record<string, any>;
-  hipaaCompliance?: {
-    patientId?: string | undefined;
-    accessReason?: string;
-  };
-  metadata?: Record<string, any>;
-}
+import { AuditLog, AuditLogSchema } from "@/models/AuditLog";
 
 export interface EventProcessingResult {
   success: boolean;
-  eventId: string;
+  id: string;
   processedAt: Date;
   error?: string;
   retryCount?: number;
@@ -171,11 +150,6 @@ export class EventBus extends EventEmitter {
         topic: eventHubs.CLINICAL,
       },
       {
-        hub: "INVENTORY",
-        handler: this.handleInventoryEvents.bind(this),
-        topic: eventHubs.INVENTORY,
-      },
-      {
         hub: "SYSTEM",
         handler: this.handleSystemEvents.bind(this),
         topic: eventHubs.SYSTEM,
@@ -218,10 +192,10 @@ export class EventBus extends EventEmitter {
    */
   private async processMessage(
     payload: EachMessagePayload,
-    handler: (event: MedCoreAuditEvent) => Promise<void>,
+    handler: (event: AuditLog) => Promise<void>,
   ): Promise<void> {
     const { message, topic, partition } = payload;
-    let eventData: MedCoreAuditEvent;
+    let eventData: AuditLog;
 
     try {
       try {
@@ -237,16 +211,12 @@ export class EventBus extends EventEmitter {
         return;
       }
 
-      if (!validateEvent(eventData, eventData.source)) {
-        const errors = getEventValidationErrors(
-          eventData,
-          (eventData as MedCoreAuditEvent).source || "unknown",
-        );
-        logger.error("Invalid event received", { errors, eventData });
+      if (!AuditLogSchema.parse(eventData)) {
+        logger.error("Invalid event received", { eventData });
 
         await this.sendToDeadLetterQueue(
           eventData,
-          new Error(`Validation errors: ${errors.join(", ")}`),
+          new Error(`Validation errors for event ID ${eventData.id}`),
           topic,
         );
         this.processingStats.totalErrors++;
@@ -268,7 +238,7 @@ export class EventBus extends EventEmitter {
       this.processingStats.lastProcessedAt = new Date();
 
       logger.debug("Event processed successfully", {
-        eventId: eventData.eventId,
+        id: eventData.id,
         eventType: eventData.eventType,
         source: eventData.source,
         topic,
@@ -281,7 +251,7 @@ export class EventBus extends EventEmitter {
         error: error instanceof Error ? error.message : "Unknown error",
         topic,
         partition,
-        eventId: eventData!.eventId,
+        id: eventData!.id,
       });
 
       await this.handleFailedEvent(eventData!, error as Error, topic);
@@ -292,7 +262,7 @@ export class EventBus extends EventEmitter {
    * Track event processing status in database
    */
   private async trackEventProcessing(
-    eventData: MedCoreAuditEvent,
+    eventData: AuditLog,
     status: string,
     source: string,
     error?: Error,
@@ -301,7 +271,7 @@ export class EventBus extends EventEmitter {
       const prisma = DatabaseConfig.getInstance();
 
       await prisma.eventProcessingStatus.upsert({
-        where: { eventId: eventData.eventId },
+        where: { eventId: eventData.id },
         update: {
           status,
           processedAt: status === "COMPLETED" ? new Date() : null,
@@ -312,8 +282,9 @@ export class EventBus extends EventEmitter {
         },
         create: {
           id: randomUUID(),
-          eventId: eventData.eventId,
-          eventType: eventData.eventType,
+          eventId: eventData.id,
+          eventType:
+            eventData.eventType || AUDIT_CONSTANTS.EVENT_TYPES.SYSTEM_ERROR,
           source,
           status,
           processedAt: status === "COMPLETED" ? new Date() : null,
@@ -324,7 +295,7 @@ export class EventBus extends EventEmitter {
       });
     } catch (dbError) {
       logger.error("Failed to track event processing", {
-        eventId: eventData.eventId,
+        id: eventData.id,
         error: dbError,
       });
     }
@@ -334,7 +305,7 @@ export class EventBus extends EventEmitter {
    * Handle failed events with retry logic and dead letter queue
    */
   private async handleFailedEvent(
-    event: MedCoreAuditEvent,
+    event: AuditLog,
     error: Error,
     topic: string,
   ): Promise<void> {
@@ -342,7 +313,7 @@ export class EventBus extends EventEmitter {
       const prisma = DatabaseConfig.getInstance();
 
       const processingStatus = await prisma.eventProcessingStatus.findUnique({
-        where: { eventId: event.eventId },
+        where: { eventId: event.id },
       });
 
       const retryCount = (processingStatus?.retryCount || 0) + 1;
@@ -352,7 +323,7 @@ export class EventBus extends EventEmitter {
         await this.sendToDeadLetterQueue(event, error, topic);
 
         await prisma.eventProcessingStatus.update({
-          where: { eventId: event.eventId },
+          where: { eventId: event.id },
           data: {
             status: "FAILED",
             sentToDLQ: true,
@@ -362,7 +333,7 @@ export class EventBus extends EventEmitter {
         });
 
         logger.error("Event sent to dead letter queue", {
-          eventId: event.eventId,
+          id: event.id,
           retryCount,
           error: error.message,
         });
@@ -370,14 +341,14 @@ export class EventBus extends EventEmitter {
         await this.scheduleRetry(event, retryCount);
 
         logger.warn("Event scheduled for retry", {
-          eventId: event.eventId,
+          id: event.id,
           retryCount,
           maxRetries,
         });
       }
     } catch (handlingError) {
       logger.error("Failed to handle failed event", {
-        eventId: event.eventId,
+        id: event.id,
         originalError: error.message,
         handlingError,
       });
@@ -388,7 +359,7 @@ export class EventBus extends EventEmitter {
    * Send failed events to dead letter queue
    */
   private async sendToDeadLetterQueue(
-    event: MedCoreAuditEvent,
+    event: AuditLog,
     error: Error,
     originalTopic: string,
   ): Promise<void> {
@@ -412,7 +383,7 @@ export class EventBus extends EventEmitter {
         topic: AzureEventHubConfig.getEventHubs().DEAD_LETTER,
         messages: [
           {
-            key: event.eventId,
+            key: event.id,
             value: JSON.stringify(dlqMessage),
             timestamp: Date.now().toString(),
           },
@@ -420,18 +391,18 @@ export class EventBus extends EventEmitter {
       });
 
       logger.info("Event sent to dead letter queue", {
-        eventId: event.eventId,
+        id: event.id,
       });
     } catch (dlqError) {
       logger.error("Failed to send event to dead letter queue", {
-        eventId: event.eventId,
+        id: event.id,
         error: dlqError,
       });
     }
   }
 
   private async scheduleRetry(
-    event: MedCoreAuditEvent,
+    event: AuditLog,
     retryCount: number,
   ): Promise<void> {
     const delay = Math.min(1000 * Math.pow(2, retryCount), 30000);
@@ -448,15 +419,12 @@ export class EventBus extends EventEmitter {
           case "ms-clinical":
             await this.handleClinicalEvents(event);
             break;
-          case "ms-inventory-billing":
-            await this.handleInventoryEvents(event);
-            break;
           default:
             await this.handleSystemEvents(event);
         }
       } catch (retryError) {
         logger.error("Event retry failed", {
-          eventId: event.eventId,
+          id: event.id,
           retryCount,
           error: retryError,
         });
@@ -469,7 +437,7 @@ export class EventBus extends EventEmitter {
    */
   async publishEvent(
     eventHubName: string,
-    event: MedCoreAuditEvent,
+    event: AuditLog,
   ): Promise<EventProcessingResult> {
     try {
       const producer = this.producers.get(eventHubName);
@@ -484,7 +452,7 @@ export class EventBus extends EventEmitter {
         topic,
         messages: [
           {
-            key: event.eventId,
+            key: event.id,
             value: JSON.stringify(event),
             timestamp: Date.now().toString(),
             headers: {
@@ -497,36 +465,36 @@ export class EventBus extends EventEmitter {
       });
 
       logger.info("Event published successfully", {
-        eventId: event.eventId,
+        id: event.id,
         eventHubName,
         topic,
       });
 
       return {
         success: true,
-        eventId: event.eventId,
+        id: event.id,
         processedAt: new Date(),
       };
     } catch (error) {
       logger.error("Failed to publish event", {
-        eventId: event.eventId,
+        id: event.id,
         eventHubName,
         error,
       });
 
       return {
         success: false,
-        eventId: event.eventId,
+        id: event.id,
         processedAt: new Date(),
         error: error instanceof Error ? error.message : "Unknown error",
       };
     }
   }
 
-  private async handleSecurityEvents(event: any): Promise<void> {
+  private async handleSecurityEvents(event: AuditLog): Promise<void> {
     try {
-      const metadata: Record<string, any> = { ...event.data };
-      let mappedEventType = event.eventType;
+      let mappedEventType =
+        event.eventType || AUDIT_CONSTANTS.EVENT_TYPES.SYSTEM_ERROR;
 
       if (
         !Object.values(AUDIT_CONSTANTS.EVENT_TYPES).includes(
@@ -534,30 +502,26 @@ export class EventBus extends EventEmitter {
         )
       ) {
         mappedEventType =
-          event.data.statusCode >= 400 ? "SECURITY_VIOLATION" : "SYSTEM_ERROR";
+          (event.statusCode ?? 0) >= 400
+            ? AUDIT_CONSTANTS.EVENT_TYPES.SECURITY_VIOLATION
+            : AUDIT_CONSTANTS.EVENT_TYPES.SYSTEM_ERROR;
       }
 
       await this.auditRepository.createAuditLog({
-        eventType: mappedEventType as any,
-        severityLevel: event.severityLevel as any,
-        action: mapEventTypeToAction(mappedEventType),
-        userId: event.userId,
-        userRole: event.userRole,
-        resourceType: AUDIT_CONSTANTS.RESOURCE_TYPES.USER_ACCOUNT,
-        resourceId: event.userId,
-        description: `Security event: ${event.eventType}`,
-        sessionId: event.sessionId,
-        ipAddress: event.data.ipAddress,
-        userAgent: event.data.userAgent,
+        ...event,
+        eventType: mappedEventType,
+        action: event.action || mapEventTypeToAction(mappedEventType),
+        source: event.source || "ms-security",
+        statusCode: event.statusCode,
         metadata: {
-          ...metadata,
-          originalEventType: event.eventType,
+          ...event.data,
+          ...event.metadata,
+          originalEventType: event.eventType || null,
         },
-        success: event.data.success !== false,
       });
 
       securityLogger.info("Security event processed", {
-        eventId: event.eventId,
+        id: event.id,
         eventType: event.eventType,
         userId: event.userId,
       });
@@ -567,31 +531,24 @@ export class EventBus extends EventEmitter {
     }
   }
 
-  private async handlePatientEvents(event: MedCoreAuditEvent): Promise<void> {
+  private async handlePatientEvents(event: AuditLog): Promise<void> {
     try {
-      const metadata: Record<string, any> = { ...event.data };
-
       await this.auditRepository.createAuditLog({
-        eventType: event.eventType as any,
-        severityLevel: event.severityLevel as any,
-        action: mapEventTypeToAction(event.eventType),
-        userId: event.userId,
-        userRole: event.data.userRole,
-        patientId: event.hipaaCompliance?.patientId,
-        resourceType: AUDIT_CONSTANTS.RESOURCE_TYPES.PATIENT_RECORD,
-        resourceId: event.data.resourceId,
-        description: `Patient event: ${event.eventType}`,
-        sessionId: event.sessionId,
-        ipAddress: event.data.ipAddress,
-        userAgent: event.data.userAgent,
-        metadata,
-        success: event.data.success !== false,
+        ...event,
+        action:
+          event.action ||
+          mapEventTypeToAction(
+            event.eventType || AUDIT_CONSTANTS.EVENT_TYPES.SYSTEM_ERROR,
+          ),
+        source: event.source || "ms-patientEHR",
+        statusCode: event.statusCode,
+        description: event.description || `Patient event: ${event.eventType}`,
       });
 
       auditLogger.info("Patient event processed", {
-        eventId: event.eventId,
+        id: event.id,
         eventType: event.eventType,
-        patientId: event.hipaaCompliance?.patientId,
+        patientId: event.targetUserId,
         hipaaCompliant: true,
       });
     } catch (error) {
@@ -600,29 +557,29 @@ export class EventBus extends EventEmitter {
     }
   }
 
-  private async handleClinicalEvents(event: MedCoreAuditEvent): Promise<void> {
+  private async handleClinicalEvents(event: AuditLog): Promise<void> {
     try {
-      const metadata: Record<string, any> = { ...event.data };
-
       await this.auditRepository.createAuditLog({
-        eventType: event.eventType as any,
-        severityLevel: event.severityLevel as any,
-        action: mapEventTypeToAction(event.eventType),
-        userId: event.userId,
-        userRole: event.userRole,
-        patientId: event.patientId,
-        resourceType: mapEventTypeToResourceType(event.eventType),
-        resourceId: event.data.resourceId,
-        description: `Clinical event: ${event.eventType}`,
-        sessionId: event.sessionId,
-        metadata,
-        success: event.data.success !== false,
+        ...event,
+        action:
+          event.action ||
+          mapEventTypeToAction(
+            event.eventType || AUDIT_CONSTANTS.EVENT_TYPES.SYSTEM_ERROR,
+          ),
+        resourceType:
+          event.resourceType ||
+          mapEventTypeToResourceType(
+            event.eventType || AUDIT_CONSTANTS.EVENT_TYPES.SYSTEM_ERROR,
+          ),
+        source: event.source || "ms-clinical",
+        statusCode: event.statusCode,
+        description: event.description || `Clinical event: ${event.eventType}`,
       });
 
       logger.info("Clinical event processed", {
-        eventId: event.eventId,
+        id: event.id,
         eventType: event.eventType,
-        patientId: event.data.patientId,
+        patientId: event.targetUserId,
       });
     } catch (error) {
       logger.error("Failed to handle clinical event", { event, error });
@@ -630,54 +587,25 @@ export class EventBus extends EventEmitter {
     }
   }
 
-  private async handleInventoryEvents(event: MedCoreAuditEvent): Promise<void> {
+  private async handleSystemEvents(event: AuditLog): Promise<void> {
     try {
-      const metadata: Record<string, any> = { ...event.data };
-
       await this.auditRepository.createAuditLog({
-        eventType: event.eventType as any,
-        severityLevel: event.severityLevel as any,
-        action: mapEventTypeToAction(event.eventType),
-        userId: event.userId,
-        userRole: event.userRole,
-        resourceType: mapEventTypeToResourceType(event.eventType),
-        resourceId: event.data.resourceId,
-        description: `Inventory/Billing event: ${event.eventType}`,
-        sessionId: event.sessionId,
-        metadata,
-        success: event.data.success !== false,
-      });
-
-      logger.info("Inventory event processed", {
-        eventId: event.eventId,
-        eventType: event.eventType,
-      });
-    } catch (error) {
-      logger.error("Failed to handle inventory event", { event, error });
-      throw error;
-    }
-  }
-
-  private async handleSystemEvents(event: MedCoreAuditEvent): Promise<void> {
-    try {
-      const metadata: Record<string, any> = { ...event.data };
-
-      await this.auditRepository.createAuditLog({
-        eventType: event.eventType as any,
-        severityLevel: event.severityLevel as any,
-        action: mapEventTypeToAction(event.eventType),
+        ...event,
         userId: event.userId || "SYSTEM",
-        userRole: "SYSTEM" as any,
-        resourceType: AUDIT_CONSTANTS.RESOURCE_TYPES.SYSTEM_CONFIG,
-        resourceId: event.data.resourceId,
-        description: `System event: ${event.eventType}`,
+        userRole: (event.userRole || "SISTEMA") as any,
+        action:
+          event.action ||
+          mapEventTypeToAction(
+            event.eventType || AUDIT_CONSTANTS.EVENT_TYPES.SYSTEM_ERROR,
+          ),
+        source: event.source || "ms-system",
+        statusCode: event.statusCode,
+        description: event.description || `System event: ${event.eventType}`,
         sessionId: event.sessionId,
-        metadata,
-        success: event.data.success !== false,
       });
 
       logger.info("System event processed", {
-        eventId: event.eventId,
+        id: event.id,
         eventType: event.eventType,
       });
     } catch (error) {

@@ -90,6 +90,7 @@ enum UserRole {
   SISTEMA
   FARMACEUTICO
   TECNICO
+  UNKNOWN
 }
 
 enum SeverityLevel {
@@ -201,31 +202,32 @@ enum ComplianceStandard {
 
 model AuditLog {
   id               String            @id @default(uuid())
-  eventType        EventType
-  userId           String?
-  userRole         UserRole?
-  targetUserId     String?
-  patientId        String?
-  resourceType     ResourceType?
-  resourceId       String?
+  accessReason     String?
   action           ActionType
+  checksum         String?
+  complianceEvents ComplianceEvent[]
+  createdAt        DateTime          @default(now())
+  data             Json? 
   description      String?
+  errorMessage     String?
+  eventType        EventType
+  hipaaCompliant   Boolean           @default(false)
   ipAddress        String?
-  userAgent        String?
+  metadata         Json?
+  resourceId       String?
+  resourceType     ResourceType?
   sessionId        String?
   severityLevel    SeverityLevel     @default(LOW)
-  metadata         Json?
+  source           String?
+  statusCode       Int?
   success          Boolean           @default(true)
-  errorMessage     String?
-  hipaaCompliant   Boolean           @default(false)
-  accessReason     String?
-  checksum         String?
-  createdAt        DateTime          @default(now())
-  complianceEvents ComplianceEvent[]
+  targetUserId     String?
+  userAgent        String?
+  userId           String?
+  userRole         UserRole?
 
   @@index([eventType])
   @@index([userId])
-  @@index([patientId])
   @@index([createdAt])
   @@index([severityLevel])
   @@index([resourceType])
@@ -392,7 +394,6 @@ model SystemAlert {
 model ComplianceEvent {
   id                  String             @id @default(uuid())
   auditLogId          String
-  auditLog            AuditLog           @relation(fields: [auditLogId], references: [id])
   standard            ComplianceStandard
   requirement         String
   status              OperationStatus
@@ -407,6 +408,8 @@ model ComplianceEvent {
   reportReference     String?
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
+
+  auditLog            AuditLog           @relation(fields: [auditLogId], references: [id])
 
   @@index([auditLogId])
   @@index([standard])

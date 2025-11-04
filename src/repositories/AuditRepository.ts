@@ -58,42 +58,53 @@ export class AuditRepository {
     try {
       const validatedInput = AuditLogSchema.parse(input);
 
+      const logId = input.id || randomUUID();
       const auditLogData = {
-        id: randomUUID(),
+        id: logId,
         ...validatedInput,
         createdAt: new Date(),
       };
 
-      const savedLog = await this.prisma.auditLog.create({
-        data: auditLogData as any,
+      let savedLog = await this.prisma.auditLog.findUnique({
+        where: { id: logId },
       });
+
+      if (!savedLog) {
+        savedLog = await this.prisma.auditLog.create({
+          data: auditLogData as any,
+        });
+      }
 
       const auditLog: AuditLog = new AuditLog(
         savedLog.id,
-        savedLog.eventType,
+        savedLog.accessReason || undefined,
         savedLog.action,
+        savedLog.checksum || undefined,
         savedLog.createdAt,
+        (savedLog.data as Record<string, any>) || undefined,
+        savedLog.description || undefined,
+        savedLog.errorMessage || undefined,
+        savedLog.eventType || undefined,
+        savedLog.hipaaCompliant || undefined,
+        savedLog.ipAddress || undefined,
+        (savedLog.metadata as Record<string, any>) || undefined,
+        savedLog.resourceId || undefined,
+        savedLog.resourceType || undefined,
+        savedLog.sessionId || undefined,
+        savedLog.severityLevel || undefined,
+        savedLog.source || undefined,
+        savedLog.statusCode || undefined,
+        savedLog.success ?? undefined,
+        savedLog.targetUserId || undefined,
+        savedLog.userAgent || undefined,
         savedLog.userId || undefined,
         savedLog.userRole || undefined,
-        savedLog.targetUserId || undefined,
-        savedLog.patientId || undefined,
-        savedLog.resourceType || undefined,
-        savedLog.resourceId || undefined,
-        savedLog.description || undefined,
-        savedLog.ipAddress || undefined,
-        savedLog.userAgent || undefined,
-        savedLog.sessionId || undefined,
-        savedLog.severityLevel,
-        (savedLog.metadata as Record<string, any>) || undefined,
-        savedLog.success,
-        savedLog.errorMessage || undefined,
       );
 
       auditLogger.info("Audit log created", {
         id: auditLog.id,
         eventType: auditLog.eventType,
         userId: auditLog.userId,
-        patientId: auditLog.patientId,
         severityLevel: auditLog.severityLevel,
         success: auditLog.success,
       });
@@ -161,23 +172,28 @@ export class AuditRepository {
         (log) =>
           new AuditLog(
             log.id,
-            log.eventType,
+            log.accessReason || undefined,
             log.action,
+            log.checksum || undefined,
             log.createdAt,
+            (log.data as Record<string, any>) || undefined,
+            log.description || undefined,
+            log.errorMessage || undefined,
+            log.eventType || undefined,
+            log.hipaaCompliant || undefined,
+            log.ipAddress || undefined,
+            (log.metadata as Record<string, any>) || undefined,
+            log.resourceId || undefined,
+            log.resourceType || undefined,
+            log.sessionId || undefined,
+            log.severityLevel || undefined,
+            log.source || undefined,
+            log.statusCode || undefined,
+            log.success || undefined,
+            log.targetUserId || undefined,
+            log.userAgent || undefined,
             log.userId || undefined,
             log.userRole || undefined,
-            log.targetUserId || undefined,
-            log.patientId || undefined,
-            log.resourceType || undefined,
-            log.resourceId || undefined,
-            log.description || undefined,
-            log.ipAddress || undefined,
-            log.userAgent || undefined,
-            log.sessionId || undefined,
-            log.severityLevel,
-            (log.metadata as Record<string, any>) || undefined,
-            log.success,
-            log.errorMessage || undefined,
           ),
       );
 
@@ -283,12 +299,13 @@ export class AuditRepository {
         audtLogId: auditLog.id,
         eventType: auditLog.eventType,
         userId: auditLog.userId,
-        patientId: auditLog.patientId,
         resourceId: auditLog.resourceId,
         resourceType: auditLog.resourceType,
         compliance: "HIPAA",
         success: auditLog.success,
-        timestamp: auditLog.createdAt.toISOString(),
+        timestamp: auditLog.createdAt
+          ? auditLog.createdAt.toISOString()
+          : undefined,
       });
 
       logger.info("HIPAA event handled", {

@@ -7,32 +7,39 @@ import { AUDIT_CONSTANTS } from "@/constants/auditConstants";
  * before being processed or stored in the database.
  */
 export const AuditLogSchema = z.object({
-  eventType: z.enum(
-    Object.values(AUDIT_CONSTANTS.EVENT_TYPES) as [string, ...string[]],
-  ),
-  userId: z.string().optional(),
-  userRole: z
-    .enum(Object.values(AUDIT_CONSTANTS.USER_ROLES) as [string, ...string[]])
+  id: z.uuid().optional(),
+  accessReason: z.string().max(500).nullish(),
+  action: z
+    .enum(Object.values(AUDIT_CONSTANTS.ACTION_TYPES) as [string, ...string[]])
     .optional(),
-  targetUserId: z.uuid().optional(),
-  patientId: z.uuid().optional(),
-  resourceType: z.string().max(100).optional(),
-  resourceId: z.string().max(100).optional(),
-  action: z.enum(
-    Object.values(AUDIT_CONSTANTS.ACTION_TYPES) as [string, ...string[]],
-  ),
+  checksum: z.string().max(64).nullish(),
+  data: z.record(z.any(), z.json()).optional(),
   description: z.string().max(1000).optional(),
+  errorMessage: z.string().max(1000).nullish(),
+  eventType: z
+    .enum(Object.values(AUDIT_CONSTANTS.EVENT_TYPES) as [string, ...string[]])
+    .optional(),
+  hipaaCompliant: z.boolean().optional(),
   ipAddress: z.ipv4().or(z.ipv6()).optional(),
-  userAgent: z.string().max(500).optional(),
-  sessionId: z.uuid().optional(),
+  metadata: z.record(z.any(), z.json()).optional(),
+  patientId: z.uuid().optional(),
+  resourceId: z.string().max(100).nullish(),
+  resourceType: z.string().max(100).nullish(),
+  sessionId: z.string().max(100).nullish(),
   severityLevel: z
     .enum(
       Object.values(AUDIT_CONSTANTS.SEVERITY_LEVELS) as [string, ...string[]],
     )
     .default("LOW"),
-  metadata: z.record(z.any(), z.json()).optional(),
-  success: z.boolean().default(true),
-  errorMessage: z.string().max(1000).optional(),
+  source: z.string().max(100).optional(),
+  statusCode: z.number().min(100).max(599).optional(),
+  success: z.boolean().default(true).optional(),
+  targetUserId: z.string().max(100).nullish(),
+  userAgent: z.string().max(500).optional(),
+  userId: z.string().optional(),
+  userRole: z
+    .enum(Object.values(AUDIT_CONSTANTS.USER_ROLES) as [string, ...string[]])
+    .optional(),
 });
 
 export type AuditLogInput = z.infer<typeof AuditLogSchema>;
@@ -43,7 +50,7 @@ export type AuditSeverity =
 
 export interface AuditLogEntity extends AuditLogInput {
   id: string;
-  createdAt: Date;
+  createdAt: Date | undefined;
 }
 
 /**
@@ -54,23 +61,28 @@ export interface AuditLogEntity extends AuditLogInput {
 export class AuditLog {
   constructor(
     public readonly id: string,
-    public readonly eventType: string,
-    public readonly action: string,
-    public readonly createdAt: Date,
-    public readonly userId?: string,
-    public readonly userRole?: string,
-    public readonly targetUserId?: string,
-    public readonly patientId?: string,
-    public readonly resourceType?: string,
-    public readonly resourceId?: string,
+    public readonly accessReason?: string,
+    public readonly action?: string,
+    public readonly checksum?: string,
+    public readonly createdAt?: Date,
+    public readonly data?: Record<string, any>,
     public readonly description?: string,
+    public readonly errorMessage?: string,
+    public readonly eventType?: string,
+    public readonly hipaaCompliant?: boolean,
     public readonly ipAddress?: string,
-    public readonly userAgent?: string,
+    public readonly metadata?: Record<string, any>,
+    public readonly resourceId?: string,
+    public readonly resourceType?: string,
     public readonly sessionId?: string,
     public readonly severityLevel: string = "LOW",
-    public readonly metadata?: Record<string, any>,
-    public readonly success: boolean = true,
-    public readonly errorMessage?: string,
+    public readonly source?: string,
+    public readonly statusCode?: number,
+    public readonly success?: boolean,
+    public readonly targetUserId?: string,
+    public readonly userAgent?: string,
+    public readonly userId?: string,
+    public readonly userRole?: string,
   ) {}
 
   /**
@@ -124,23 +136,28 @@ export class AuditLog {
   public toPlainObject(): AuditLogEntity {
     return {
       id: this.id,
-      eventType: this.eventType,
-      userId: this.userId,
-      userRole: this.userRole,
-      targetUserId: this.targetUserId,
-      patientId: this.patientId,
-      resourceType: this.resourceType,
-      resourceId: this.resourceId,
+      accessReason: this.accessReason,
       action: this.action,
+      checksum: this.checksum,
+      createdAt: this.createdAt,
+      data: this.data,
       description: this.description,
+      errorMessage: this.errorMessage,
+      eventType: this.eventType,
+      hipaaCompliant: this.isHIPAASensitive(),
       ipAddress: this.ipAddress,
-      userAgent: this.userAgent,
+      metadata: this.metadata,
+      resourceId: this.resourceId,
+      resourceType: this.resourceType,
       sessionId: this.sessionId,
       severityLevel: this.severityLevel,
-      metadata: this.metadata,
+      source: this.source,
+      statusCode: this.statusCode,
       success: this.success,
-      errorMessage: this.errorMessage,
-      createdAt: this.createdAt,
+      targetUserId: this.targetUserId,
+      userAgent: this.userAgent,
+      userId: this.userId,
+      userRole: this.userRole,
     };
   }
 }

@@ -4,6 +4,8 @@ import { AuditRepository } from "@/repositories/AuditRepository";
 import { eventBus } from "@/services/EventBus";
 import { AUDIT_CONSTANTS } from "@/constants/auditConstants";
 import { MS_ADMIN_AUDIT_CONFIG } from "@/config/environments";
+import { AuditLog } from "@/models/AuditLog";
+import { randomUUID } from "crypto";
 
 export interface CustomError extends Error {
   statusCode?: number;
@@ -26,11 +28,10 @@ export const errorHandler = async (
     return next(error);
   }
 
-  const errorId = generateErrorId();
+  const errorId = randomUUID();
   const statusCode = error.statusCode || 500;
   const isOperational = error.isOperational ?? statusCode < 500;
 
-  // Log estructurado del error
   logger.error("Request error", {
     errorId,
     error: error.message,
@@ -45,13 +46,11 @@ export const errorHandler = async (
     isOperational,
   });
 
-  // Crear audit log y evento en paralelo
   await Promise.allSettled([
     createAuditLog(error, req, errorId, statusCode),
     publishErrorEvent(error, req, errorId, statusCode, isOperational),
   ]);
 
-  // Respuesta al cliente
   const errorResponse = buildErrorResponse(error, req, errorId, statusCode);
   res.status(statusCode).json(errorResponse);
 };
@@ -112,16 +111,13 @@ async function publishErrorEvent(
   isOperational: boolean,
 ): Promise<void> {
   try {
-    // Publicar evento para sistema de alertas y monitoreo
-    await eventBus.publishEvent("SYSTEM", {
-      eventId: errorId,
-      eventType: "SYSTEM_ERROR",
-      source: "ms-admin-audit",
-      timestamp: new Date(),
-      userId: req.headers["x-user-id"] as string,
-      sessionId: req.headers["x-session-id"] as string,
-      severityLevel: statusCode < 500 ? "MEDIUM" : "HIGH",
-      data: {
+    const auditLog = new AuditLog(
+      errorId,
+      undefined,
+      AUDIT_CONSTANTS.ACTION_TYPES.ERROR,
+      undefined,
+      new Date(),
+      {
         error: error.message,
         statusCode,
         method: req.method,
@@ -134,11 +130,30 @@ async function publishErrorEvent(
             ? error.stack
             : undefined,
       },
-      metadata: {
+      `API Error: ${error.message}`,
+      error.message,
+      "SYSTEM_ERROR",
+      false,
+      req.ip,
+      {
         errorCode: error.code,
         details: error.details,
+        errorId,
       },
-    });
+      `${req.method} ${req.path}`,
+      AUDIT_CONSTANTS.RESOURCE_TYPES.SYSTEM_CONFIG,
+      req.headers["x-session-id"] as string,
+      statusCode < 500 ? "MEDIUM" : "HIGH",
+      "ms-admin-audit",
+      statusCode,
+      false,
+      undefined,
+      req.headers["user-agent"] as string,
+      req.headers["x-user-id"] as string,
+      req.headers["x-user-role"] as string,
+    );
+
+    await eventBus.publishEvent("SYSTEM", auditLog);
 
     logger.debug("Error event published", { errorId, statusCode });
   } catch (eventError) {
@@ -171,7 +186,6 @@ function buildErrorResponse(
     errorResponse.code = error.code;
   }
 
-  // Solo incluir detalles sensibles en desarrollo
   if (MS_ADMIN_AUDIT_CONFIG.NODE_ENV === "development") {
     errorResponse.stack = error.stack;
     errorResponse.details = error.details;
@@ -182,7 +196,6 @@ function buildErrorResponse(
 }
 
 function getClientMessage(error: CustomError, statusCode: number): string {
-  // Sanitizar mensajes para producción
   if (MS_ADMIN_AUDIT_CONFIG.NODE_ENV === "production") {
     if (statusCode >= 500) {
       return "Internal server error occurred. Please contact support.";
@@ -192,11 +205,6 @@ function getClientMessage(error: CustomError, statusCode: number): string {
   return error.message || "An unexpected error occurred";
 }
 
-function generateErrorId(): string {
-  return `ERR_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-}
-
-// Error classes existentes...
 export class ValidationError extends Error {
   statusCode = 400;
   code = "VALIDATION_ERROR";

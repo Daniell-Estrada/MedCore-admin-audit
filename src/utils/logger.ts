@@ -88,10 +88,7 @@ export const logger = winston.createLogger({
     ? [baseConsoleTransport]
     : [
         new winston.transports.File({
-          filename: path.join(
-            MS_ADMIN_AUDIT_CONFIG.LOG_DIR,
-            "exceptions.log",
-          ),
+          filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "exceptions.log"),
         }),
       ],
   rejectionHandlers: MS_ADMIN_AUDIT_CONFIG.VERCEL
@@ -119,10 +116,7 @@ export const auditLogger = winston.createLogger({
     ? [baseConsoleTransport]
     : [
         new winston.transports.File({
-          filename: path.join(
-            MS_ADMIN_AUDIT_CONFIG.LOG_DIR,
-            "audit-trail.log",
-          ),
+          filename: path.join(MS_ADMIN_AUDIT_CONFIG.LOG_DIR, "audit-trail.log"),
           maxsize: 100 * 1024 * 1024,
           maxFiles: 100,
           tailable: true,
@@ -167,8 +161,6 @@ if (!MS_ADMIN_AUDIT_CONFIG.VERCEL) {
       fs.mkdirSync(logDir, { recursive: true });
     }
   } catch (e) {
-    // Fallback to console if directory cannot be created
-    // This should not happen locally/containers, but keeps serverless safe
     console.warn("Could not create log directory:", logDir, e);
   }
 
