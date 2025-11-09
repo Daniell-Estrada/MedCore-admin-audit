@@ -79,9 +79,13 @@ export class EventBus extends EventEmitter {
           await this.recoverConnections();
         }
       } catch (error) {
-        logger.error("Connection monitoring error", { error });
+        if (error instanceof Error && error.message.includes("ECONNRESET")) {
+          logger.debug("ECONNRESET detected during monitoring, will retry");
+        } else {
+          logger.error("Connection monitoring error", { error });
+        }
       }
-    }, 60000);
+    }, 30000);
   }
 
   /**
@@ -117,6 +121,23 @@ export class EventBus extends EventEmitter {
     for (const [hubName, hubTopic] of Object.entries(eventHubs)) {
       try {
         const producer = await AzureEventHubConfig.createProducer(hubTopic);
+        
+        producer.on("producer.connect", () => {
+          logger.info("Producer connected successfully", { hubName, hubTopic });
+        });
+        
+        producer.on("producer.disconnect", () => {
+          logger.warn("Producer disconnected", { hubName, hubTopic });
+        });
+        
+        producer.on("producer.network.request_timeout", (payload) => {
+          logger.warn("Producer network request timeout", { 
+            hubName, 
+            hubTopic, 
+            payload 
+          });
+        });
+        
         this.producers.set(hubName, producer);
 
         logger.info("Producer initialized", { hubName, hubTopic });
@@ -170,6 +191,34 @@ export class EventBus extends EventEmitter {
         const connection = await AzureEventHubConfig.getConnection(topic);
 
         if (connection.consumer) {
+          connection.consumer.on("consumer.connect", () => {
+            logger.info("Consumer connected successfully", { hub, topic });
+          });
+          
+          connection.consumer.on("consumer.disconnect", () => {
+            logger.warn("Consumer disconnected", { hub, topic });
+          });
+          
+          connection.consumer.on("consumer.crash", (payload) => {
+            logger.error("Consumer crashed", { 
+              hub, 
+              topic, 
+              payload 
+            });
+
+            setTimeout(() => {
+              void this.recoverConnections();
+            }, 5000);
+          });
+          
+          connection.consumer.on("consumer.network.request_timeout", (payload) => {
+            logger.warn("Consumer network request timeout", { 
+              hub, 
+              topic, 
+              payload 
+            });
+          });
+
           await connection.consumer.run({
             eachMessage: async (payload: EachMessagePayload) => {
               await this.processMessage(payload, handler);

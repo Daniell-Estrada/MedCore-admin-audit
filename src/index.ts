@@ -80,14 +80,7 @@ async function startServer() {
       });
     }
 
-    void eventBus
-      .initialize()
-      .then(() => {
-        logger.info("EventBus initialized successfully");
-      })
-      .catch((error) => {
-        logger.error("EventBus initialization failed", { error });
-      });
+    await eventBus.initialize();
   } catch (error) {
     logger.error("Failed to start server", { error });
     if (!MS_ADMIN_AUDIT_CONFIG.VERCEL) {

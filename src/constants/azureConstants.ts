@@ -4,8 +4,6 @@ export const AZURE_EVENT_HUB_CONSTANTS = {
   SECURITY: "medcore-security-events",
   PATIENT: "medcore-patient-events",
   CLINICAL: "medcore-clinical-events",
-  INVENTORY: "medcore-inventory-events",
   SYSTEM: "medcore-system-events",
-  COMPLIANCE: "medcore-compliance-events",
-  DLQ: "medcore-dead-letter-queue",
+  DLQ: "medcore-dead-letter-queue-events",
 } as const;

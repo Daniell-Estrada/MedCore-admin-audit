@@ -25,6 +25,7 @@ export class AzureEventHubConfig {
   private static kafka: Kafka | null = null;
   private static connections: Map<string, EventHubConnection> = new Map();
   private static shuttingDown = false;
+  private static lastEconnresetLogAt = 0;
 
   static beginShutdown(): void {
     this.shuttingDown = true;
@@ -39,42 +40,56 @@ export class AzureEventHubConfig {
         throw new Error("Azure Event Hub configuration is missing.");
       }
 
+      const brokers = (AZURE_EVENT_HUB_CONFIG.BROKERS || []).filter(Boolean);
+      if (brokers.length === 0) {
+        throw new Error("AZURE_EVENT_HUB_BROKERS is not configured");
+      }
+      const servername = brokers[0].split(":")[0];
+
       const kafkaConfig: KafkaConfig = {
         clientId: AZURE_EVENT_HUB_CONFIG.CLIENT_ID,
-        brokers: AZURE_EVENT_HUB_CONFIG.BROKERS,
-        ssl: true,
+        brokers,
+        ssl: {
+          servername,
+          rejectUnauthorized: true,
+          minVersion: "TLSv1.2",
+        },
         sasl: {
           mechanism: "plain",
           username: "$ConnectionString",
           password: connectionString,
         },
-        connectionTimeout: 60000,
-        requestTimeout: 120000,
-        enforceRequestTimeout: false,
+        connectionTimeout: 30000,
+        requestTimeout: 30000,
+        authenticationTimeout: 15000,
+        enforceRequestTimeout: true,
         retry: {
-          initialRetryTime: 1000,
-          retries: 8,
-          maxRetryTime: 60000,
+          initialRetryTime: 300,
+          retries: 10,
+          maxRetryTime: 30000,
           factor: 2,
-          multiplier: 1.5,
+          multiplier: 2,
           restartOnFailure: async (e) => {
-            logger.error("Kafka connection failed, restarting", { error: e });
+            logger.warn("Kafka connection failed, restarting", {
+              error: e.message,
+            });
             return true;
           },
         },
         logLevel: KafkaLogLevel.ERROR,
         logCreator: () => (entry: LogEntry) => {
-          if (
-            AzureEventHubConfig.shuttingDown &&
-            typeof entry.log?.message === "string" &&
-            entry.log.message.includes("Connection error: read ECONNRESET")
-          ) {
-            return;
+          const msg =
+            typeof entry.log?.message === "string" ? entry.log.message : "";
+          if (msg.includes("Connection error: read ECONNRESET")) {
+            if (AzureEventHubConfig.shuttingDown) return;
+            const now = Date.now();
+            if (now - AzureEventHubConfig.lastEconnresetLogAt < 60000) return;
+            AzureEventHubConfig.lastEconnresetLogAt = now;
           }
 
           const payload = {
             namespace: entry.namespace,
-            message: entry.log?.message,
+            message: msg,
             broker: (entry.log as any)?.broker,
             clientId: (entry.log as any)?.clientId,
             stack: (entry.log as any)?.stack,
@@ -115,12 +130,20 @@ export class AzureEventHubConfig {
     const producer = kafka.producer({
       maxInFlightRequests: 5,
       idempotent: false,
-      transactionTimeout: 6000,
+      transactionTimeout: 30000,
       createPartitioner: Partitioners.DefaultPartitioner,
       retry: {
-        initialRetryTime: 1000,
-        retries: 5,
-        maxRetryTime: 6000,
+        initialRetryTime: 300,
+        retries: 10,
+        maxRetryTime: 30000,
+        multiplier: 2,
+        restartOnFailure: async (e) => {
+          logger.warn("Producer connection failed, restarting", {
+            error: e.message,
+            eventHubName,
+          });
+          return true;
+        },
       },
       allowAutoTopicCreation: false,
     });
@@ -138,18 +161,26 @@ export class AzureEventHubConfig {
 
     const consumer = kafka.consumer({
       groupId: consumerGroup,
-      sessionTimeout: 15000,
+      sessionTimeout: 30000,
       heartbeatInterval: 3000,
       maxWaitTimeInMs: AZURE_EVENT_HUB_CONFIG.MAX_WAIT_TIME_MS,
-      rebalanceTimeout: 18000,
+      rebalanceTimeout: 60000,
       retry: {
-        initialRetryTime: 100,
-        retries: 5,
-        maxRetryTime: 6000,
+        initialRetryTime: 300,
+        retries: 10,
+        maxRetryTime: 30000,
+        multiplier: 2,
+        restartOnFailure: async (e) => {
+          logger.warn("Consumer connection failed, restarting", {
+            error: e.message,
+            consumerGroup,
+          });
+          return true;
+        },
       },
       allowAutoTopicCreation: false,
       readUncommitted: false,
-      metadataMaxAge: 3000,
+      metadataMaxAge: 30000,
     });
 
     await consumer.connect();
@@ -175,16 +206,12 @@ export class AzureEventHubConfig {
         AZURE_EVENT_HUB_CONSTANTS.SECURITY,
         AZURE_EVENT_HUB_CONSTANTS.PATIENT,
         AZURE_EVENT_HUB_CONSTANTS.CLINICAL,
-        AZURE_EVENT_HUB_CONSTANTS.INVENTORY,
         AZURE_EVENT_HUB_CONSTANTS.SYSTEM,
       ].includes(eventHubName as any);
 
       let consumer;
       if (shouldCreateConsumer) {
-        const topicSuffix = eventHubName
-          .replace("medcore-", "")
-          .replace("-events", "");
-        const uniqueConsumerGroup = `${AZURE_EVENT_HUB_CONFIG.CONSUMER_GROUP}-${topicSuffix}`;
+        const uniqueConsumerGroup = eventHubName.replace("events", "consumer");
         consumer = await this.createConsumer(eventHubName, uniqueConsumerGroup);
       }
 
@@ -207,9 +234,7 @@ export class AzureEventHubConfig {
       SECURITY: AZURE_EVENT_HUB_CONSTANTS.SECURITY,
       PATIENT: AZURE_EVENT_HUB_CONSTANTS.PATIENT,
       CLINICAL: AZURE_EVENT_HUB_CONSTANTS.CLINICAL,
-      INVENTORY: AZURE_EVENT_HUB_CONSTANTS.INVENTORY,
       SYSTEM: AZURE_EVENT_HUB_CONSTANTS.SYSTEM,
-      COMPLIANCE: AZURE_EVENT_HUB_CONSTANTS.COMPLIANCE,
       DEAD_LETTER: AZURE_EVENT_HUB_CONSTANTS.DLQ,
     };
   }
