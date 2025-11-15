@@ -12,8 +12,8 @@ import { AZURE_EVENT_HUB_CONSTANTS } from "@/constants/azureConstants";
 import { AZURE_EVENT_HUB_CONFIG } from "./environments";
 
 export interface EventHubConnection {
-  producer: Producer;
-  consumer: Consumer;
+  producer?: Producer;
+  consumer?: Consumer;
   isConnected: boolean;
 }
 
@@ -26,6 +26,8 @@ export class AzureEventHubConfig {
   private static connections: Map<string, EventHubConnection> = new Map();
   private static shuttingDown = false;
   private static lastEconnresetLogAt = 0;
+  private static lastHeartbeatLogAt = 0;
+  private static lastSyncGroupLogAt = 0;
 
   static beginShutdown(): void {
     this.shuttingDown = true;
@@ -83,8 +85,21 @@ export class AzureEventHubConfig {
           if (msg.includes("Connection error: read ECONNRESET")) {
             if (AzureEventHubConfig.shuttingDown) return;
             const now = Date.now();
-            if (now - AzureEventHubConfig.lastEconnresetLogAt < 60000) return;
+            if (now - AzureEventHubConfig.lastEconnresetLogAt < 300000) return;
             AzureEventHubConfig.lastEconnresetLogAt = now;
+          }
+
+          if (msg.includes("Response Heartbeat")) {
+            const now = Date.now();
+            if (now - AzureEventHubConfig.lastHeartbeatLogAt < 60000) return;
+            AzureEventHubConfig.lastHeartbeatLogAt = now;
+            entry = { ...entry, level: KafkaLogLevel.WARN } as any;
+          }
+          if (msg.includes("Response SyncGroup")) {
+            const now = Date.now();
+            if (now - AzureEventHubConfig.lastSyncGroupLogAt < 60000) return;
+            AzureEventHubConfig.lastSyncGroupLogAt = now;
+            entry = { ...entry, level: KafkaLogLevel.WARN } as any;
           }
 
           const payload = {
@@ -161,10 +176,10 @@ export class AzureEventHubConfig {
 
     const consumer = kafka.consumer({
       groupId: consumerGroup,
-      sessionTimeout: 30000,
-      heartbeatInterval: 3000,
+      sessionTimeout: AZURE_EVENT_HUB_CONFIG.CONSUMER_SESSION_TIMEOUT_MS,
+      heartbeatInterval: AZURE_EVENT_HUB_CONFIG.CONSUMER_HEARTBEAT_INTERVAL_MS,
       maxWaitTimeInMs: AZURE_EVENT_HUB_CONFIG.MAX_WAIT_TIME_MS,
-      rebalanceTimeout: 60000,
+      rebalanceTimeout: AZURE_EVENT_HUB_CONFIG.REBALANCE_TIMEOUT_MS,
       retry: {
         initialRetryTime: 300,
         retries: 10,
@@ -180,7 +195,7 @@ export class AzureEventHubConfig {
       },
       allowAutoTopicCreation: false,
       readUncommitted: false,
-      metadataMaxAge: 30000,
+      metadataMaxAge: AZURE_EVENT_HUB_CONFIG.METADATA_MAX_AGE_MS,
     });
 
     await consumer.connect();
@@ -199,33 +214,47 @@ export class AzureEventHubConfig {
 
   static async getConnection(
     eventHubName: string,
+    options?: {
+      mode?: "producer" | "consumer" | "both";
+      consumerGroup?: string;
+    },
   ): Promise<EventHubConnection> {
-    if (!this.connections.has(eventHubName)) {
-      const producer = await this.createProducer(eventHubName);
-      const shouldCreateConsumer = [
-        AZURE_EVENT_HUB_CONSTANTS.SECURITY,
-        AZURE_EVENT_HUB_CONSTANTS.PATIENT,
-        AZURE_EVENT_HUB_CONSTANTS.CLINICAL,
-        AZURE_EVENT_HUB_CONSTANTS.SYSTEM,
-      ].includes(eventHubName as any);
+    const mode = options?.mode || "both";
 
-      let consumer;
-      if (shouldCreateConsumer) {
-        const uniqueConsumerGroup = eventHubName.replace("events", "consumer");
-        consumer = await this.createConsumer(eventHubName, uniqueConsumerGroup);
-      }
-
-      const connection: EventHubConnection = {
-        producer,
-        consumer: consumer!,
-        isConnected: true,
-      };
-
-      this.connections.set(eventHubName, connection);
-      logger.info("New Event Hub connection established", { eventHubName });
+    let existing = this.connections.get(eventHubName);
+    if (!existing) {
+      existing = { isConnected: false };
+      this.connections.set(eventHubName, existing);
     }
 
-    return this.connections.get(eventHubName)!;
+    if ((mode === "producer" || mode === "both") && !existing.producer) {
+      existing.producer = await this.createProducer(eventHubName);
+      existing.isConnected = true;
+    }
+
+    const shouldCreateConsumer = [
+      AZURE_EVENT_HUB_CONSTANTS.SECURITY,
+      AZURE_EVENT_HUB_CONSTANTS.PATIENT,
+      AZURE_EVENT_HUB_CONSTANTS.CLINICAL,
+      AZURE_EVENT_HUB_CONSTANTS.SYSTEM,
+    ].includes(eventHubName as any);
+
+    if (
+      (mode === "consumer" || mode === "both") &&
+      shouldCreateConsumer &&
+      !existing.consumer
+    ) {
+      const consumerGroup =
+        options?.consumerGroup || eventHubName.replace("events", "consumer");
+      existing.consumer = await this.createConsumer(
+        eventHubName,
+        consumerGroup,
+      );
+      existing.isConnected = true;
+    }
+
+    logger.info("New Event Hub connection established", { eventHubName });
+    return existing;
   }
 
   static getEventHubs() {
@@ -252,7 +281,9 @@ export class AzureEventHubConfig {
       disconnectPromises.push(
         (async () => {
           try {
-            await connection.producer.disconnect();
+            if (connection.producer) {
+              await connection.producer.disconnect();
+            }
           } catch (e: any) {
             const msg = e?.message || String(e);
             if (!this.shuttingDown || !msg.includes("ECONNRESET")) {

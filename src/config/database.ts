@@ -26,7 +26,7 @@ export class DatabaseConfig {
           logger.debug("Database query executed", {
             query: e.query,
             params: e.params,
-            duration: `${e.duration}ms`
+            duration: `${e.duration}ms`,
           });
         });
       }

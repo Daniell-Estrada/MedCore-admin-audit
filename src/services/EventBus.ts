@@ -53,7 +53,6 @@ export class EventBus extends EventEmitter {
     }
 
     try {
-      await this.initializeProducers();
       await this.initializeConsumers();
       this.startConnectionMonitoring();
       this.isInitialized = true;
@@ -101,7 +100,6 @@ export class EventBus extends EventEmitter {
       await AzureEventHubConfig.disconnectAll();
       await new Promise((resolve) => setTimeout(resolve, 5000));
 
-      await this.initializeProducers();
       await this.initializeConsumers();
 
       logger.info("Connection recovery completed");
@@ -109,42 +107,6 @@ export class EventBus extends EventEmitter {
       logger.error("Connection recovery failed", { error });
     } finally {
       this.isRecovering = false;
-    }
-  }
-
-  /**
-   * Initialize producers for all event hubs
-   */
-  private async initializeProducers(): Promise<void> {
-    const eventHubs = AzureEventHubConfig.getEventHubs();
-
-    for (const [hubName, hubTopic] of Object.entries(eventHubs)) {
-      try {
-        const producer = await AzureEventHubConfig.createProducer(hubTopic);
-        
-        producer.on("producer.connect", () => {
-          logger.info("Producer connected successfully", { hubName, hubTopic });
-        });
-        
-        producer.on("producer.disconnect", () => {
-          logger.warn("Producer disconnected", { hubName, hubTopic });
-        });
-        
-        producer.on("producer.network.request_timeout", (payload) => {
-          logger.warn("Producer network request timeout", { 
-            hubName, 
-            hubTopic, 
-            payload 
-          });
-        });
-        
-        this.producers.set(hubName, producer);
-
-        logger.info("Producer initialized", { hubName, hubTopic });
-      } catch (error) {
-        logger.error("Failed to initialize producer", { hubName, error });
-        throw error;
-      }
     }
   }
 
@@ -182,42 +144,41 @@ export class EventBus extends EventEmitter {
       const { hub, handler, topic } = subscriptions[i];
 
       try {
-        if (i > 0) {
-          const delay = 10000 + i * 5000; // 10s, 15s, 20s, 25s, 30s
-          logger.info(`Delaying consumer initialization for ${hub}`, { delay });
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        }
-
-        const connection = await AzureEventHubConfig.getConnection(topic);
+        const connection = await AzureEventHubConfig.getConnection(topic, {
+          mode: "consumer",
+        });
 
         if (connection.consumer) {
           connection.consumer.on("consumer.connect", () => {
             logger.info("Consumer connected successfully", { hub, topic });
           });
-          
+
           connection.consumer.on("consumer.disconnect", () => {
             logger.warn("Consumer disconnected", { hub, topic });
           });
-          
+
           connection.consumer.on("consumer.crash", (payload) => {
-            logger.error("Consumer crashed", { 
-              hub, 
-              topic, 
-              payload 
+            logger.error("Consumer crashed", {
+              hub,
+              topic,
+              payload,
             });
 
             setTimeout(() => {
               void this.recoverConnections();
             }, 5000);
           });
-          
-          connection.consumer.on("consumer.network.request_timeout", (payload) => {
-            logger.warn("Consumer network request timeout", { 
-              hub, 
-              topic, 
-              payload 
-            });
-          });
+
+          connection.consumer.on(
+            "consumer.network.request_timeout",
+            (payload) => {
+              logger.warn("Consumer network request timeout", {
+                hub,
+                topic,
+                payload,
+              });
+            },
+          );
 
           await connection.consumer.run({
             eachMessage: async (payload: EachMessagePayload) => {
@@ -413,10 +374,12 @@ export class EventBus extends EventEmitter {
     originalTopic: string,
   ): Promise<void> {
     try {
-      const dlqProducer = this.producers.get("DEAD_LETTER");
-      if (!dlqProducer) {
-        throw new Error("Dead letter queue producer not available");
-      }
+      const dlqTopic = AzureEventHubConfig.getEventHubs().DEAD_LETTER;
+      const { producer: dlqProducer } = await AzureEventHubConfig.getConnection(
+        dlqTopic,
+        { mode: "producer" },
+      );
+      if (!dlqProducer) throw new Error("DLQ producer not available");
 
       const dlqMessage = {
         ...event,
@@ -429,7 +392,7 @@ export class EventBus extends EventEmitter {
       };
 
       await dlqProducer.send({
-        topic: AzureEventHubConfig.getEventHubs().DEAD_LETTER,
+        topic: dlqTopic,
         messages: [
           {
             key: event.id,
@@ -489,13 +452,12 @@ export class EventBus extends EventEmitter {
     event: AuditLog,
   ): Promise<EventProcessingResult> {
     try {
-      const producer = this.producers.get(eventHubName);
-      if (!producer) {
-        throw new Error(`Producer for ${eventHubName} not found`);
-      }
-
       const eventHubs = AzureEventHubConfig.getEventHubs();
       const topic = eventHubs[eventHubName as keyof typeof eventHubs];
+      const { producer } = await AzureEventHubConfig.getConnection(topic, {
+        mode: "producer",
+      });
+      if (!producer) throw new Error("Producer not available");
 
       await producer.send({
         topic,
