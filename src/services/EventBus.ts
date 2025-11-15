@@ -462,7 +462,7 @@ export class EventBus extends EventEmitter {
           case "ms-security":
             await this.handleSecurityEvents(event);
             break;
-          case "ms-patientEHR":
+          case "ms-patient-ehr":
             await this.handlePatientEvents(event);
             break;
           case "ms-clinical":
@@ -589,7 +589,7 @@ export class EventBus extends EventEmitter {
           mapEventTypeToAction(
             event.eventType || AUDIT_CONSTANTS.EVENT_TYPES.SYSTEM_ERROR,
           ),
-        source: event.source || "ms-patientEHR",
+        source: event.source || "ms-patient-ehr",
         statusCode: event.statusCode,
         description: event.description || `Patient event: ${event.eventType}`,
       });
