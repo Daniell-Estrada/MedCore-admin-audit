@@ -24,6 +24,8 @@ export const prisma = new PrismaClient({
   log: ["query", "info", "warn", "error"],
 });
 
+app.set("trust proxy", true);
+
 // Middleware for security headers
 app.use(
   helmet({
@@ -56,6 +58,11 @@ app.use(
     windowMs: 15 * 60 * 1000,
     max: 1000,
     message: "Too many requests from this IP, please try again later.",
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: {
+      forwardedHeader: false,
+    },
   }),
 );
 
@@ -64,6 +71,12 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use(requestLogger);
+
+app.get("/", (_, res) =>
+  res
+    .status(200)
+    .json({ status: "healthy", service: "ms-admin-audit", version: "1.0.0" }),
+);
 
 app.use("/api/v1", routes);
 

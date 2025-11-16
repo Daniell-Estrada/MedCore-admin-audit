@@ -8,7 +8,7 @@ async function initializeApp() {
     const moduleAlias = require("module-alias");
     const path = require("path");
 
-    moduleAlias.addAlias("@", path.join(__dirname, "../dist"));
+    moduleAlias.addAlias("@", path.join(__dirname, "../src"));
     require("module-alias/register");
 
     isInitialized = true;
@@ -20,7 +20,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await initializeApp();
 
     if (!app) {
-      const { default: expressApp } = await import("../dist/index");
+      const { default: expressApp } = await import("../src/index");
       app = expressApp;
     }
 
