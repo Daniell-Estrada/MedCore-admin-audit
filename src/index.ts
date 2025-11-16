@@ -1,4 +1,7 @@
-import "module-alias/register";
+import moduleAlias from "module-alias";
+import path from "path";
+moduleAlias.addAlias("@", path.join(__dirname));
+
 import cors from "cors";
 import express from "express";
 import compression from "compression";

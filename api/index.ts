@@ -9,7 +9,6 @@ async function initializeApp() {
     const path = require("path");
 
     moduleAlias.addAlias("@", path.join(__dirname, "../src"));
-    require("module-alias/register");
 
     isInitialized = true;
   }
